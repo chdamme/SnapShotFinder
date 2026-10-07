@@ -288,7 +288,7 @@
   const Core = window.SSFCore;
   const state = {
     photos: [], selected: null, generation: 0, busy: false, processed: 0,
-    tab: 'gps', filter: '', previewURL: null, geocoder: null, addressRun: 0,
+    tab: 'gps', filter: '', previewURL: null, previewReader: null, geocoder: null, addressRun: 0,
     addressCache: new Map(), maps: new Map(), mapStarted: false, renderPending: false,
     mapError: false, ignored: 0, mapStyles: new Map(), duplicateHits: ''
   };
@@ -377,7 +377,9 @@
   }
   function releasePreview() {
     $('photoPreview').onload = null; $('photoPreview').onerror = null; $('photoPreview').removeAttribute('src');
-    if (state.previewURL) URL.revokeObjectURL(state.previewURL);
+    const reader = state.previewReader;
+    state.previewReader = null;
+    if (reader && reader.readyState === FileReader.LOADING) reader.abort();
     state.previewURL = null;
   }
   function refreshCaption() {
@@ -394,15 +396,24 @@
     $('photoEmpty').hidden = true; $('selectedName').textContent = p.file.name; $('selectedName').title = p.file.name;
     $('photoCounter').textContent = `${state.photos.indexOf(p) + 1} / ${state.photos.length}`;
     $('previousPhoto').disabled = state.photos.length < 2; $('nextPhoto').disabled = state.photos.length < 2;
-    if (changed || !state.previewURL) {
+    if (changed || (!state.previewURL && !state.previewReader)) {
       releasePreview(); $('previewError').hidden = true; $('photoPreview').hidden = false;
-      const url = URL.createObjectURL(p.file); state.previewURL = url;
+      // Use the same data URL preview method as the original version.
+      const reader = new FileReader(); state.previewReader = reader;
       $('photoPreview').alt = p.file.name;
-      $('photoPreview').onerror = () => {
-        if (state.previewURL !== url) return;
+      const showPreviewError = () => {
+        if (state.previewReader !== reader) return;
         $('photoPreview').hidden = true; $('previewError').textContent = 'This browser cannot preview this file. Any readable GPS data is still listed in the table.'; $('previewError').hidden = false;
       };
-      $('photoPreview').src = url;
+      reader.onerror = showPreviewError;
+      reader.onload = () => {
+        // Ignore a previous photo if the selection changed while reading.
+        if (state.previewReader !== reader) return;
+        state.previewURL = reader.result;
+        $('photoPreview').onerror = showPreviewError;
+        $('photoPreview').src = reader.result;
+      };
+      reader.readAsDataURL(p.file);
     }
     refreshCaption();
     for (const row of $('tableBody').rows) row.classList.toggle('selected', Number(row.dataset.id) === id);
