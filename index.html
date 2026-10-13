@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="color-scheme" content="light">
-<meta name="application-version" content="2.0.3">
+<meta name="application-version" content="2.3.0">
 <title>SnapShotFinder — Photos into places</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%230c766e'/%3E%3Cpath d='M20 7a10 10 0 0 0-10 10c0 8 10 17 10 17s10-9 10-17A10 10 0 0 0 20 7' fill='white'/%3E%3Ccircle cx='20' cy='17' r='4' fill='%230c766e'/%3E%3C/svg%3E">
 <style>
@@ -39,13 +39,198 @@
 @media(max-width:760px){body{padding:0 10px 12px}.topbar{padding:14px 0;align-items:flex-start;flex-direction:column;gap:12px}.brand-icon{width:37px;height:37px}h1{font-size:22px}.actions{width:100%;gap:6px}.actions button{flex:1;font-size:11px;white-space:nowrap}.controls{gap:10px}.options{width:100%;justify-content:space-between;gap:7px}.check{font-size:11px}.workspace{display:flex;flex-direction:column;gap:12px}.photo-panel{height:390px}.data-panel{height:350px}.map-panel{height:390px}.map-header{flex-wrap:wrap}.map-background select{max-width:190px}.panel-header{padding:10px 12px}.data-tools input{width:170px}.app-footer{flex-direction:column;gap:4px}.footer-status{text-align:left;max-width:100%}.photo-caption{max-width:230px}}
 @media print{body{padding:0;background:#fff;font-size:10px}.topbar{min-height:55px}.actions,.options,.data-tools,.photo-nav,.map-actions,.layers-drawer,.toast,.drop-overlay,.progress-track,dialog{display:none!important}.controls{margin:5px 0}.workspace{display:grid!important;grid-template-columns:1fr 1fr;grid-template-rows:76mm 80mm;gap:3mm}.panel{break-inside:avoid;box-shadow:none}.panel-header{min-height:30px;padding:6px 8px}.photo-panel,.data-panel,.map-panel{height:auto!important}.table-wrap{overflow:hidden}thead th,td{font-size:8px;padding:5px}.photo-footer{min-height:35px;padding:6px}.photo-caption{max-width:none}.app-footer{font-size:8px}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4 landscape;margin:9mm}}
 </style>
+<style id="timelineStyles">
+/* Timeline additions only; the existing layout and photo preview stay intact. */
+.timeline-info{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px 12px;padding:7px 14px;border-bottom:1px solid var(--line);color:var(--muted);font-size:10px;line-height:1.5;flex-shrink:0}
+.timeline-key{display:inline-flex;gap:11px;flex-wrap:wrap;white-space:nowrap}
+.timeline-key span{display:inline-flex;align-items:center;gap:5px}
+.timeline-key i{display:inline-block;width:18px;border-top:2px solid #126c9f}
+.timeline-key .timeline-direct{border-top:2px dashed #b85c23}
+#dataTable.is-timeline th{white-space:normal;min-width:72px}
+#dataTable.is-timeline th:nth-child(3){min-width:150px}
+#dataTable.is-timeline th:nth-child(4){min-width:155px}
+#dataTable.is-timeline th:nth-child(n+5){min-width:100px}
+#dataTable.is-timeline td.timeline-address{max-width:240px}
+#dataTable.is-timeline td.timeline-timestamp{font-variant-numeric:tabular-nums}
+@media print{.timeline-info{padding:3px 7px;font-size:8px}}
+</style>
+
+<style id="screenOptimizationStyles">
+/* Screen optimisation: reclaim space without changing photo/data/map logic.
+   Change --tile-gap to adjust all four tiles together. Print styles stay intact. */
+@media screen {
+  :root { --tile-gap: 4px; --page-edge: 6px; }
+  body {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0 var(--page-edge) 6px;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  .topbar, .controls, .app-footer { flex: 0 0 auto; min-width: 0; }
+  .topbar { min-height: 64px; padding: 6px 4px; gap: 10px; }
+  .controls { margin-bottom: 6px; padding: 0 4px; gap: 6px 10px; }
+  .workspace {
+    flex: 1 1 0;
+    min-height: 584px;
+    gap: var(--tile-gap);
+    grid-template-rows: minmax(300px, 1.05fr) minmax(280px, 1fr);
+  }
+  .panel { border-radius: 8px; }
+  .panel-header { padding: 3px 10px; min-height: 40px; gap: 4px 8px; }
+  .panel-header h2 { font-size: 13px; }
+  .panel-header .tabs { padding: 2px; }
+  /* Keep the two-line photo footer below the header height. */
+  .photo-footer { min-height: 36px; padding: 3px 10px; gap: 10px; flex-shrink: 0; }
+  .photo-info { line-height: 1.2; }
+  .photo-caption { margin-top: 1px; }
+  .data-tools { padding: 6px 10px; }
+  .data-tools label { flex: 1 1 130px; min-width: 0; }
+  .data-tools input { width: 100%; max-width: 260px; min-width: 0; }
+  /* Long status messages remain scrollable rather than enlarging the footer. */
+  .data-footer { padding: 6px 10px; min-height: 30px; max-height: 36px; overflow-y: auto; overflow-wrap: anywhere; }
+  .timeline-info { padding: 5px 10px; }
+  .map-footer { padding: 5px 10px; min-height: 26px; }
+  .map-background { min-width: 0; }
+  .app-footer { padding: 6px 4px 0; gap: 6px 12px; }
+  .app-footer > p { min-width: 0; }
+
+  /* A compact empty state must still fit the minimum desktop tile height. */
+  .empty-photo {
+    margin: 8px;
+    padding: 6px 10px;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+    max-width: 470px;
+    gap: 4px;
+    overflow: auto;
+    justify-content: safe center;
+  }
+  .empty-photo > * { flex-shrink: 0; }
+  .empty-photo svg { width: 24px; height: 24px; }
+  .empty-photo p { line-height: 1.45; }
+}
+
+@media screen and (max-width: 1080px) {
+  .topbar { flex-wrap: wrap; }
+  .brand { min-width: 0; }
+  .actions { gap: 5px; }
+}
+
+@media screen and (max-width: 760px) {
+  :root { --page-edge: 4px; }
+  body { height: auto; min-height: 100vh; min-height: 100dvh; display: block; }
+  .topbar { min-height: 0; padding: 8px 2px 6px; gap: 8px; }
+  .brand { gap: 9px; }
+  .brand-icon { flex-shrink: 0; }
+  .actions { gap: 4px; }
+  .actions button { flex: 1 1 auto; min-height: 38px; }
+  .controls { padding: 0 2px; margin-bottom: 6px; gap: 6px; }
+  .options { gap: 4px 8px; }
+  .check { min-height: 28px; }
+  .workspace { min-height: 0; gap: var(--tile-gap); }
+  .panel-header { padding: 2px 8px; }
+  .photo-panel, .map-panel { height: 390px; }
+  .data-panel { height: 350px; }
+  .photo-footer { min-height: 38px; padding: 2px 8px; }
+  .photo-nav button { min-width: 36px; min-height: 32px; }
+  .tabs { max-width: 100%; }
+  .tabs button { min-height: 34px; }
+  .data-tools { padding: 6px 8px; }
+  .data-tools input { max-width: none; min-height: 36px; font-size: 16px; }
+  .data-tools button { min-height: 36px; }
+  .data-footer, .timeline-info { padding: 5px 8px; }
+  .data-footer { max-height: 38px; }
+  .map-header .map-actions { gap: 4px; max-width: 100%; }
+  .map-actions button, .map-background select { min-height: 36px; }
+  .map-background select { max-width: min(190px, 50vw); }
+  .map-footer { padding: 5px 8px; }
+  .app-footer { padding: 6px 2px 0; gap: 4px; }
+}
+</style>
+
+<style id="photoZoomStyles">
+/* Photo-only controls: no extra row and no change to the compact tile layout. */
+#photoStage { isolation: isolate; }
+#photoStage.is-photo-ready { touch-action: pan-y; }
+#photoStage.is-photo-zoomed { cursor: grab; touch-action: none; }
+#photoStage.is-photo-dragging { cursor: grabbing; }
+#photoStage:focus-visible { outline-offset: -3px; }
+#photoPreview {
+  position: absolute; inset: 0;
+  transform-origin: center center;
+  user-select: none; -webkit-user-select: none; -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+#photoStage.is-photo-ready #photoPreview { will-change: transform; }
+#photoStage .gps-stamp { z-index: 1; pointer-events: none; }
+#photoStage .preview-message { z-index: 2; }
+.photo-zoom-tools {
+  position: absolute; bottom: 8px; right: 8px; z-index: 3;
+  display: flex; align-items: center; gap: 3px; padding: 3px;
+  border: 1px solid #ffffff66; border-radius: 8px;
+  background: #fffffff0; box-shadow: 0 2px 10px #0002;
+  cursor: default; user-select: none; -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.photo-zoom-tools button {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; min-width: 32px; height: 30px; min-height: 30px;
+  padding: 0; border-color: transparent; background: transparent;
+  font-size: 20px; font-weight: 550; line-height: 1;
+}
+.photo-zoom-tools button:focus-visible { outline-offset: -2px; }
+.photo-zoom-tools .photo-fit { width: 38px; font-size: 11px; font-weight: 650; }
+.photo-zoom-value { min-width: 46px; text-align: center; font-size: 11px; color: var(--ink); }
+@media (pointer: coarse), (max-width: 760px) {
+  .photo-zoom-tools { bottom: 6px; right: 6px; }
+  .photo-zoom-tools button { width: 40px; min-width: 40px; height: 40px; min-height: 40px; }
+  .photo-zoom-tools .photo-fit { width: 40px; }
+}
+@media print {
+  .photo-zoom-tools { display: none !important; }
+  #photoPreview { transform: none !important; }
+}
+</style>
+
+<style id="screenCaptureStyles">
+/* One new toolbar button; existing tile spacing and photo controls are unchanged. */
+#captureScreen { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+#captureScreen svg { width: 15px; height: 15px; flex: 0 0 auto; }
+.capture-floating { position: fixed; right: calc(10px + env(safe-area-inset-right)); bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 30; display: grid; place-items: center; width: 42px; height: 42px; padding: 9px; background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 2px 10px #0003; border-radius: 10px; }
+.capture-floating svg { width: 22px; height: 22px; }
+.capture-floating:hover:not(:disabled) { background: #075d57; color: white; }
+#captureDialog { max-width: 1050px; width: calc(100% - 24px); max-height: calc(100dvh - 24px); }
+#captureDialog .dialog-head { padding: 11px 15px; gap: 10px; }
+.capture-body { padding: 12px 15px 15px; overflow: auto; max-height: calc(100dvh - 96px); }
+.capture-body > p { font-size: 12px; line-height: 1.6; color: var(--muted); margin-bottom: 10px; }
+.capture-preview { width: 100%; max-height: 58vh; overflow: auto; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); }
+.capture-preview img { display: block; width: auto; height: auto; max-width: 100%; max-height: 58vh; margin: auto; }
+.capture-preview.is-portrait img { width: auto; max-width: 100%; max-height: 58vh; margin: auto; }
+.capture-frame-box { position: relative; overflow: hidden; margin: auto; }
+.capture-frame-box iframe { display: block; border: 0; transform-origin: top left; pointer-events: none; }
+.capture-downloads { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 12px; }
+.capture-downloads a { text-decoration: none; padding: 8px 12px; min-height: 36px; border: 1px solid var(--accent); border-radius: 7px; background: var(--accent); color: white; font-weight: 650; }
+.capture-downloads a[aria-disabled=true] { pointer-events: none; opacity: .42; }
+.capture-note { padding: 10px 12px; background: #fff4e2; border: 1px solid #ebd7b7; border-radius: 7px; }
+.capture-work-frame { position: fixed; left: -100000px; top: 0; border: 0; pointer-events: none; }
+@media (max-width:760px) {
+  #captureDialog .dialog-head { padding: 9px 11px; }
+  .capture-body { padding: 10px 11px 12px; }
+  .capture-downloads > * { flex: 1 1 auto; text-align: center; min-height: 40px; }
+}
+@media print { #captureDialog, #captureFloating, .capture-work-frame { display: none !important; } }
+</style>
 </head>
 <body>
 <noscript><p class="noscript">Please enable JavaScript to read photo locations and display maps.</p></noscript>
 <div class="progress-track" id="progressTrack" hidden><div class="progress-bar" id="progressBar"></div></div>
 <header class="topbar">
  <div class="brand"><div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-7.4 8-14a8 8 0 1 0-16 0c0 6.6 8 14 8 14Z"/><circle cx="12" cy="8" r="3"/></svg></div><div><h1>SnapShotFinder</h1><p class="subtitle">Your photos. Their coordinates. Two perspectives.</p></div></div>
- <div class="actions"><button class="primary" id="openPhotos">Open photos</button><button id="fitAll" disabled>Fit all locations</button><button id="exportCSV" disabled>Export CSV</button><button id="clearAll" disabled>Clear</button><button id="helpButton" aria-label="Help and privacy information">SOS / Help</button></div>
+ <div class="actions"><button class="primary" id="openPhotos">Open photos</button><button id="fitAll" disabled>Fit all locations</button><button id="exportCSV" disabled>Export CSV</button><button id="captureScreen" type="button" title="Save the currently visible SnapShotFinder view as PNG or PDF" aria-haspopup="dialog" aria-controls="captureDialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 5l2-2h4l2 2h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><circle cx="12" cy="12" r="4"/></svg>Screenshot</button><button id="clearAll" disabled>Clear</button><button id="helpButton" aria-label="Help and privacy information">SOS / Help</button></div>
 </header>
 <input id="fileInput" type="file" accept="image/jpeg,image/png,image/tiff,image/webp,.jpg,.jpeg,.jpe,.png,.tif,.tiff,.webp" multiple hidden>
 <section class="controls" aria-label="Session overview and settings">
@@ -55,15 +240,23 @@
 <main class="workspace">
  <section class="panel photo-panel" aria-labelledby="photoHeading">
   <div class="panel-header"><div class="panel-title"><span class="panel-index">01</span><h2 id="photoHeading">Photo preview</h2></div><span class="eyebrow">Read locally</span></div>
-  <div class="photo-stage" id="photoStage">
+  <div class="photo-stage" id="photoStage" tabindex="-1" role="group" aria-label="Photo preview" aria-describedby="photoZoomHelp">
    <div class="empty-photo" id="photoEmpty"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="6" y="11" width="28" height="22" rx="4"/><path d="m13 11 3-5h8l3 5"/><circle cx="20" cy="22" r="6"/><path d="M29 16h1"/></svg><h3>Put your photos on the map</h3><p>Drop one or several photos anywhere on this page.<br>Or choose them from your device.</p><button class="primary" id="choosePhotos">Choose photos</button><p>JPEG, PNG, TIFF and WebP with EXIF metadata.<br>Your original files are never modified.</p></div>
-   <img id="photoPreview" alt="" hidden><span id="gpsStamp" class="gps-stamp mono" hidden></span><div class="preview-message" id="previewError" hidden></div>
+   <img id="photoPreview" alt="" draggable="false" hidden><span id="gpsStamp" class="gps-stamp mono" hidden></span><div class="preview-message" id="previewError" hidden></div>
+   <div class="photo-zoom-tools" id="photoZoomTools" role="group" aria-label="Photo zoom controls" hidden>
+    <button type="button" id="photoZoomOut" aria-label="Zoom out" title="Zoom out (−)" aria-controls="photoPreview" disabled>−</button>
+    <span class="photo-zoom-value mono" id="photoZoomValue" title="100% = the complete photo fitted into this tile">100%</span>
+    <button type="button" id="photoZoomIn" aria-label="Zoom in" title="Zoom in (+)" aria-controls="photoPreview" disabled>+</button>
+    <button type="button" id="photoZoomFit" class="photo-fit" aria-label="Fit the complete photo" title="Show the complete photo (0)" aria-controls="photoPreview" disabled>Fit</button>
+   </div>
+   <span id="photoZoomHelp" class="sr-only">Zoom with the plus and minus buttons, the mouse wheel or two fingers. Drag a zoomed photo to move it. Double-click or double-tap to zoom or fit. With the photo focused, use + and − to zoom, arrow keys to move a zoomed photo, and 0 to fit. At 100%, one finger scrolls the page. 100% means fitted to the tile, not original pixel size.</span>
   </div>
   <div class="photo-footer"><div class="photo-info"><p class="filename" id="selectedName">No photo selected</p><p class="photo-caption" id="selectedCaption">Select a photo, a table row or a numbered map marker.</p></div><div class="photo-nav"><button id="previousPhoto" aria-label="Previous photo" disabled>←</button><span class="photo-counter mono" id="photoCounter">0 / 0</span><button id="nextPhoto" aria-label="Next photo" disabled>→</button></div></div>
  </section>
  <section class="panel data-panel" aria-labelledby="dataHeading">
-  <div class="panel-header"><div class="panel-title"><span class="panel-index">02</span><h2 id="dataHeading">Photo data</h2></div><div class="tabs" role="tablist" aria-label="Data view"><button id="gpsTab" role="tab" aria-selected="true" aria-controls="dataTablePanel">GPS data</button><button id="addressTab" role="tab" aria-selected="false" aria-controls="dataTablePanel" tabindex="-1">Addresses</button></div></div>
+  <div class="panel-header"><div class="panel-title"><span class="panel-index">02</span><h2 id="dataHeading">Photo data</h2></div><div class="tabs" role="tablist" aria-label="Data view"><button id="gpsTab" role="tab" aria-selected="true" aria-controls="dataTablePanel">GPS data</button><button id="addressTab" role="tab" aria-selected="false" aria-controls="dataTablePanel" tabindex="-1">Addresses</button><button id="timelineTab" role="tab" aria-selected="false" aria-controls="dataTablePanel" tabindex="-1">Timeline</button></div></div>
   <div class="data-tools"><label><span class="sr-only">Filter photos by filename or address</span><input id="filterPhotos" type="search" placeholder="Filter by name or address…" autocomplete="off"></label><button id="retryAddresses" disabled>Retry addresses</button></div>
+  <div id="timelineInfo" class="timeline-info" hidden><span id="timelineSummary"></span><span class="timeline-key"><span><i aria-hidden="true"></i>Consecutive photos</span><span id="timelineDirectKey"><i class="timeline-direct" aria-hidden="true"></i>First to last</span></span></div>
   <div class="table-wrap" id="dataTablePanel" role="tabpanel" aria-labelledby="gpsTab" tabindex="0"><table id="dataTable"><caption class="sr-only" id="tableCaption">Photo coordinates and metadata</caption><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table><div class="data-empty" id="dataEmpty">Coordinates and addresses will appear here.</div></div>
   <div class="data-footer" id="dataStatus" role="status" aria-live="polite">Ready to read your photos.</div>
  </section>
@@ -78,11 +271,14 @@
   <div class="map-footer"><span id="mapStatus4">Luxembourg · Geoportail</span><span>Two maps, independent backgrounds</span></div>
  </section>
 </main>
-<footer class="app-footer"><p>Photos are read on your device. Map views and address-search coordinates are sent to Geoportail.<br>No photo upload, account or local photo database. CSV exports contain location data.</p><p class="footer-status"><span class="status-dot" id="mapStatusDot"></span><span id="serviceStatus">Connecting to map services…</span><br>SnapShotFinder 2.0.3 · Christian Dammé</p></footer>
+<footer class="app-footer"><p>Photos are read on your device. Map views and address-search coordinates are sent to Geoportail.<br>No photo upload, account or local photo database. CSV exports contain location data.</p><p class="footer-status"><span class="status-dot" id="mapStatusDot"></span><span id="serviceStatus">Connecting to map services…</span><br>SnapShotFinder 2.3.0 · Christian Dammé</p></footer>
 <div class="drop-overlay" id="dropOverlay" hidden><strong>Drop your photos here</strong><p>This replaces the current selection.</p></div>
 <div class="toast" id="toast" role="status" hidden></div>
 <dialog id="helpDialog" aria-labelledby="helpHeading"><div class="dialog-head"><h2 id="helpHeading">SnapShotFinder · Help & privacy</h2><button id="closeHelp" aria-label="Close help">Close</button></div><div class="dialog-body">
  <h3>From photo to location</h3><p>Open or drop photos. SnapShotFinder reads their embedded EXIF GPS data, numbers the files in natural filename order, and places matching markers on two Geoportail maps. Select a row or a marker to view that photo. Arrow keys move between photos.</p>
+ <h3>Zoom and move a photo</h3><p>Use + / − or the mouse wheel to zoom in Tile 01. Drag the enlarged photo with the left mouse button. On a phone or tablet, spread or pinch two fingers to zoom, then drag with one finger to move the enlarged photo. At 100%, a one-finger swipe scrolls the page normally. Fit shows the complete photo again; 100% means fitted to the tile, not original pixel size. Double-click or double-tap toggles between a closer view and Fit. Zoom ranges from 100% to 800%. Selecting another photo resets the view. No image file or metadata is changed.</p><p>Keyboard: focus the photo, then use + / − to zoom, arrow keys to move an enlarged photo, and 0 or Escape to fit. Outside the enlarged preview, left/right arrow keys still change photos. Printed output shows the complete photo.</p>
+ <h3>Save the current screen</h3><p>Screenshot freezes the visible SnapShotFinder page when you press the button, including the selected photo, its zoom and position, the active data tab, the table scroll position and the visible map layers. The preview offers Download PNG and Download PDF. Both contain the same frozen view; the PDF uses a single page with the screen's aspect ratio, not a rearranged A4 report. On phones, only the visible portion of the page is included. Files are created locally; no screen-sharing permission or photo upload is needed.</p><p>Some map servers or browsers prevent exporting map pixels. In that case, the preview keeps the frozen map canvases and offers Save as PDF / Print instead. Choose Save as PDF in your browser, enable background graphics, disable browser headers/footers and use no margins. The browser or printer may scale the view to its selected paper size. This fallback does not bypass browser security and does not silently omit a protected map.</p>
+ <h3>Timeline</h3><p>Timeline lists photos with valid GPS and an EXIF capture time, oldest first, while preserving their original numbers. DateTimeOriginal is preferred; DateTimeDigitized is the fallback. Blue arrows connect consecutive listed photos; time is shown above each connection and distance below it. With three or more photos, a dashed orange arrow also connects the first photo to the last. Its direct distance is not added to the cumulative distance. Leaving Timeline removes these extra connections. Search filters apply to both the Timeline table and its arrows.</p>
  <h3>No GPS data?</h3><p>A photo can still be previewed without GPS data. The program does not guess its location or analyse landmarks. Enable location tagging in your camera before taking a photo. Use original files: messaging apps, image editing or screenshots may remove metadata.</p>
  <h3>Supported files</h3><p>The built-in reader handles standard EXIF metadata in JPEG, PNG, TIFF and WebP. HEIC/HEIF, AVIF, RAW, BigTIFF and XMP-only location data are not read in this version. Export such files to JPEG with metadata preserved. TIFF preview depends on your browser; coordinates can still be read when a preview is unavailable.</p>
  <h3>Coordinates and addresses</h3><p>Latitude and longitude are WGS84. X/Y LUREF are metres in EPSG:2169, calculated when the Geoportail projection library is available and only within the Luxembourg region. Decimal places are display formatting, not an accuracy guarantee. “Direction” is the camera's EXIF compass heading; T means true north and M means magnetic north.</p><p>An address result is the <strong>nearest known address</strong>, not proof that the camera was at that property. Its distance is shown separately. Luxembourg reverse geocoding is skipped far outside the region. A numbered marker is the camera location, not necessarily the location of the photographed object. A group-centre cross is only a map reference.</p>
@@ -92,6 +288,18 @@
  <details><summary>Hilfe auf Deutsch</summary><p>Ziehen Sie Ihre Originalfotos auf die Seite. Gespeicherte GPS-Koordinaten werden auf zwei Karten angezeigt. Klicken Sie auf eine Tabellenzeile oder einen Kartenmarker, um das Foto auszuwählen. Bilder ohne GPS bleiben sichtbar, ihr Aufnahmeort wird aber nicht erraten. Angezeigt wird die nächstgelegene bekannte Adresse samt Entfernung. Die Fotos werden nicht hochgeladen; Kartenaufrufe und Koordinaten zur Adresssuche werden an Geoportail übertragen.</p></details>
  <p class="small muted" style="margin-top:18px">Original concept: Christian Dammé. Use at your own discretion; verify positions before relying on them for operational decisions.</p>
 </div></dialog>
+
+<button id="captureFloating" class="capture-floating" type="button" aria-label="Screenshot: save the current view" aria-haspopup="dialog" aria-controls="captureDialog" title="Screenshot" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 5l2-2h4l2 2h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><circle cx="12" cy="12" r="4"/></svg></button>
+<dialog id="captureDialog" aria-labelledby="captureHeading">
+ <div class="dialog-head"><h2 id="captureHeading">Save current view</h2><button id="closeCapture" type="button">Close</button></div>
+ <div class="capture-body">
+  <p id="captureStatus" role="status" aria-live="polite">Preparing your snapshot…</p>
+  <div id="capturePreview" class="capture-preview" hidden><img id="captureImage" alt="Frozen SnapShotFinder view at the time Screenshot was pressed" hidden><div id="captureFrameBox" class="capture-frame-box" hidden></div></div>
+  <p id="captureWarning" class="capture-note" hidden></p>
+  <div class="capture-downloads"><a id="downloadScreenPNG" aria-disabled="true" tabindex="-1">Download PNG</a><button id="downloadScreenPDF" type="button" disabled>Download PDF</button><button id="printScreenPDF" type="button" hidden>Save as PDF / Print</button></div>
+  <p class="small" style="margin-top:10px;margin-bottom:0">Only the visible page area is captured, not the browser toolbar or other windows. On a phone, tiles below the visible area are not included. Nothing is uploaded.</p>
+ </div>
+</dialog>
 <script>
 /* SnapShotFinder: small, dependency-free reader for standard EXIF metadata.
    Binary data is read in bounded slices; full-resolution photos are not copied into memory.
@@ -236,12 +444,18 @@
       return output;
     }
     const rootIFD = await readIFD(hd.getUint32(4, little), new Set([0x8825, 0x8769, 0x0112, 0x0132]));
-    let cameraTime = rootIFD[0x0132] || '';
+    let cameraTime = rootIFD[0x0132] || '', captureTime = null;
     // An unrelated, malformed date block must not discard usable GPS coordinates.
     if (rootIFD[0x8769]) {
+      // Keep GPS/cameraTime readable even when a separate optional time tag is malformed.
       try { const exif = await readIFD(rootIFD[0x8769], new Set([0x9003])); cameraTime = exif[0x9003] || cameraTime; } catch (_) {}
+      const times = {};
+      for (const tag of [0x9003, 0x9004, 0x9291, 0x9292, 0x9011, 0x9012]) {
+        try { Object.assign(times, await readIFD(rootIFD[0x8769], new Set([tag]))); } catch (_) {}
+      }
+      captureTime = captureTimeFromTags(times);
     }
-    const result = {hasGPS: false, orientation: rootIFD[0x0112] || null, cameraTime};
+    const result = {hasGPS: false, orientation: rootIFD[0x0112] || null, cameraTime, captureTime};
     if (!rootIFD[0x8825]) return result;
     const gps = await readIFD(rootIFD[0x8825], new Set([1,2,3,4,5,6,16,17]));
     if (gps[2] === undefined && gps[4] === undefined) return result;
@@ -253,6 +467,99 @@
     result.altitude = Number.isFinite(gps[6]) && [0,1].includes(gps[5]) ? gps[6] * (gps[5] === 1 ? -1 : 1) : null;
     return result;
   }
+  // Capture times are separate from cameraTime, which the original GPS table
+  // also fills from the EXIF modification date. Modification dates are never
+  // used to qualify a photo for Timeline.
+  function parseExifTimestamp(value, subSeconds, offsetString) {
+    const clean = v => typeof v === 'string' ? v.replace(/\0.*$/s, '').trim() : '';
+    const match = /^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/.exec(clean(value));
+    if (!match) return null;
+    const [year, month, day, hour, minute, second] = match.slice(1, 7).map(Number);
+    if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31 ||
+        hour > 23 || minute > 59 || second > 59) return null;
+    const fraction = match[7] || clean(subSeconds);
+    const subMs = /^\d+$/.test(fraction) ? Number((fraction + '000').slice(0, 3)) : 0;
+    const date = new Date(0);
+    date.setUTCFullYear(year, month - 1, day);
+    date.setUTCHours(hour, minute, second, subMs);
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 ||
+        date.getUTCDate() !== day) return null;
+    let offset = clean(offsetString), offsetMinutes = null;
+    if (offset === 'Z') offsetMinutes = 0;
+    else if (offset) {
+      const parts = /^([+-])(\d{2}):(\d{2})$/.exec(offset);
+      if (parts && Number(parts[2]) <= 14 && Number(parts[3]) < 60 &&
+          (Number(parts[2]) < 14 || Number(parts[3]) === 0)) {
+        offsetMinutes = (Number(parts[2]) * 60 + Number(parts[3])) * (parts[1] === '-' ? -1 : 1);
+      } else offset = '';
+    }
+    const display = match.slice(1, 4).join('-') + ' ' + match.slice(4, 7).join(':') +
+      (subMs ? '.' + String(subMs).padStart(3, '0') : '') +
+      (offset ? offset === 'Z' ? ' UTC' : ' ' + offset : '');
+    return {
+      milliseconds: date.getTime() - (offsetMinutes === null ? 0 : offsetMinutes * 60000),
+      cameraMilliseconds: date.getTime(), offsetMinutes, display
+    };
+  }
+  function captureTimeFromTags(tags) {
+    const candidates = [
+      ['DateTimeOriginal', 0x9003, 'SubsecTimeOriginal', 0x9291, 'OffsetTimeOriginal', 0x9011],
+      ['DateTimeDigitized', 0x9004, 'SubsecTimeDigitized', 0x9292, 'OffsetTimeDigitized', 0x9012]
+    ];
+    for (const [name, tag, subName, subTag, offsetName, offsetTag] of candidates) {
+      const parsed = parseExifTimestamp(tags[tag] ?? tags[name],
+        tags[subTag] ?? tags[subName] ?? tags[subName.replace('Subsec', 'SubSec')],
+        tags[offsetTag] ?? tags[offsetName]);
+      if (parsed) return {...parsed, source: name};
+    }
+    return null;
+  }
+  function validTimelineGPS(photo) {
+    return photo.hasGPS && Number.isFinite(photo.latitude) && Number.isFinite(photo.longitude) &&
+      Math.abs(photo.latitude) <= 90 && Math.abs(photo.longitude) <= 180;
+  }
+  function distanceBetweenPhotos(first, last) {
+    if (!validTimelineGPS(first) || !validTimelineGPS(last)) return NaN;
+    const r = Math.PI / 180;
+    const dLat = (last.latitude - first.latitude) * r, dLon = (last.longitude - first.longitude) * r;
+    const a = Math.min(1, Math.max(0, Math.sin(dLat / 2) ** 2 +
+      Math.cos(first.latitude * r) * Math.cos(last.latitude * r) * Math.sin(dLon / 2) ** 2));
+    return 6371008.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+  function buildTimelineRows(photos) {
+    const eligible = photos.filter(photo => validTimelineGPS(photo) &&
+      photo.captureTime && Number.isFinite(photo.captureTime.milliseconds));
+    // Incomplete offsets cannot establish absolute chronology across time zones.
+    // Compare all recorded camera times consistently instead of guessing a zone.
+    const allOffsetsKnown = eligible.length > 0 && eligible.every(photo =>
+      Number.isFinite(photo.captureTime.offsetMinutes));
+    const timeOf = photo => !allOffsetsKnown && Number.isFinite(photo.captureTime.cameraMilliseconds) ?
+      photo.captureTime.cameraMilliseconds : photo.captureTime.milliseconds;
+    eligible.sort((a, b) => timeOf(a) - timeOf(b) || a.id - b.id);
+    let cumulativeMs = 0, cumulativeMeters = 0;
+    return eligible.map((photo, index) => {
+      const timestampMs = timeOf(photo);
+      const deltaMs = index ? timestampMs - timeOf(eligible[index - 1]) : null;
+      const distanceMeters = index ? distanceBetweenPhotos(eligible[index - 1], photo) : null;
+      if (index) { cumulativeMs += deltaMs; cumulativeMeters += distanceMeters; }
+      return {photo, timestampMs, deltaMs, cumulativeMs, distanceMeters, cumulativeMeters};
+    });
+  }
+  function formatDuration(milliseconds) {
+    if (!Number.isFinite(milliseconds)) return '—';
+    const total = Math.max(0, Math.round(milliseconds)), pad = n => String(n).padStart(2, '0');
+    const days = Math.floor(total / 86400000), hours = Math.floor(total % 86400000 / 3600000);
+    const minutes = Math.floor(total % 3600000 / 60000), seconds = Math.floor(total % 60000 / 1000);
+    const fraction = total % 1000;
+    return (days ? days + ' d ' : '') + pad(hours) + ':' + pad(minutes) + ':' + pad(seconds) +
+      (fraction ? '.' + String(fraction).padStart(3, '0') : '');
+  }
+  function formatDistance(metres) {
+    if (!Number.isFinite(metres)) return '—';
+    if (metres >= 1000) return (metres / 1000).toFixed(3) + ' km';
+    return (Math.round(metres * 10) / 10).toLocaleString('en-GB', {maximumFractionDigits: 1}) + ' m';
+  }
+
   function nearLuxembourg(lat, lon) {
     // A deliberately broad coverage guard, NOT an administrative border test.
     return lat >= 49.3 && lat <= 50.3 && lon >= 5.6 && lon <= 6.7;
@@ -277,7 +584,8 @@
     if (/^\s*[=+@-]/.test(s) || /^[\t\r\n]/.test(s)) s = "'" + s;
     return '"' + s.replace(/"/g, '""') + '"';
   }
-  const api = {readExif, dmsToDecimal, nearLuxembourg, normaliseAddress, csvCell, MetadataError};
+  const api = {readExif, dmsToDecimal, nearLuxembourg, normaliseAddress, csvCell, MetadataError,
+    parseExifTimestamp, captureTimeFromTags, buildTimelineRows, distanceBetweenPhotos, formatDuration, formatDistance};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.SSFCore = Object.freeze(api);
 })(typeof window === 'object' ? window : globalThis);
 
@@ -339,13 +647,18 @@
     return labels[p.addressStatus] || '—';
   }
   function renderTable() {
-    const headers = state.tab === 'gps' ? ['No.','File name','Status','Latitude','Longitude','X LUREF (m)','Y LUREF (m)','Direction','Camera date/time'] : ['No.','File name','Nearest known address','Distance','Lookup status'];
+    const timelineRows = state.tab === 'timeline' ? getTimelineRows() : [];
+    const headers = state.tab === 'gps' ? ['No.','File name','Status','Latitude','Longitude','X LUREF (m)','Y LUREF (m)','Direction','Camera date/time'] :
+      state.tab === 'address' ? ['No.','File name','Nearest known address','Distance','Lookup status'] :
+      ['No','FileName','NearestAddress','Timestamp','Time difference','Cumulative time','Distance','Cumulative distance'];
+    $('dataTable').classList.toggle('is-timeline', state.tab === 'timeline');
     const head = document.createElement('tr');
     for (const label of headers) { const th = document.createElement('th'); th.scope = 'col'; th.textContent = label; head.appendChild(th); }
     $('tableHead').replaceChildren(head);
     const body = document.createDocumentFragment();
-    const visible = getVisible();
-    for (const p of visible) {
+    const visible = state.tab === 'timeline' ? timelineRows.map(row => row.photo) : getVisible();
+    for (let index = 0; index < visible.length; index++) {
+      const p = visible[index];
       const row = document.createElement('tr'); row.dataset.id = String(p.id); row.classList.toggle('selected', p.id === state.selected);
       makeCell(row, String(p.id), 'num');
       const name = makeCell(row, ''); const button = document.createElement('button'); button.className = 'row-file'; button.textContent = p.file.name;
@@ -356,26 +669,266 @@
         makeCell(row, format(p.xLuref, 2), 'num').title = p.hasGPS && !Number.isFinite(p.xLuref) ? 'LUREF requires the Geoportail projection library and a position in the Luxembourg region.' : 'Approximate projected coordinate; decimals do not indicate GPS accuracy.';
         makeCell(row, format(p.yLuref, 2), 'num'); makeCell(row, headingText(p), 'num');
         makeCell(row, (p.cameraTime || '').replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3') || '—').title = 'Date/time as stored by the camera; timezone may be unspecified.';
-      } else {
+      } else if (state.tab === 'address') {
         const addr = makeCell(row, p.address?.formatted || '—'); addr.title = p.address?.formatted || p.addressError || '';
         makeCell(row, p.address && Number.isFinite(p.address.distance) ? `${p.address.distance.toFixed(0)} m` : '—', 'num');
         const badge = document.createElement('span'); badge.className = `badge ${p.addressStatus === 'ready' ? 'ok' : p.addressStatus === 'error' ? 'error' : ''}`;
         badge.textContent = addressStatusText(p); badge.title = p.addressError || ''; makeCell(row, '').appendChild(badge);
+      } else {
+        const entry = timelineRows[index];
+        const addr = makeCell(row, p.address?.formatted || addressStatusText(p), 'timeline-address');
+        addr.title = p.address?.formatted || p.addressError || addressStatusText(p);
+        makeCell(row, p.captureTime.display, 'timeline-timestamp').title = 'EXIF ' + p.captureTime.source;
+        makeCell(row, Core.formatDuration(entry.deltaMs), 'num');
+        makeCell(row, Core.formatDuration(entry.cumulativeMs), 'num');
+        makeCell(row, Core.formatDistance(entry.distanceMeters), 'num');
+        makeCell(row, Core.formatDistance(entry.cumulativeMeters), 'num');
       }
       body.appendChild(row);
     }
     $('tableBody').replaceChildren(body);
     $('dataEmpty').hidden = visible.length > 0;
-    $('dataEmpty').textContent = state.photos.length ? 'No photos match this filter.' : 'Coordinates and addresses will appear here.';
-    $('tableCaption').textContent = state.tab === 'gps' ? 'Photo coordinates and camera metadata' : 'Nearest known addresses for the photo locations';
+    $('dataEmpty').textContent = state.tab === 'timeline' ?
+      (state.busy ? 'Reading capture times…' : state.filter ?
+        'No matching photos have both GPS coordinates and a usable EXIF capture time.' :
+        'Timeline shows photos with GPS coordinates and a usable EXIF capture time.') :
+      state.photos.length ? 'No photos match this filter.' : 'Coordinates and addresses will appear here.';
+    $('tableCaption').textContent = state.tab === 'gps' ? 'Photo coordinates and camera metadata' :
+      state.tab === 'address' ? 'Nearest known addresses for the photo locations' : 'Photo timeline, oldest capture first';
+    renderTimelineInfo(timelineRows);
+    updateTimelineMaps(timelineRows);
   }
   function setTab(tab) {
+    if (!['gps','address','timeline'].includes(tab)) return;
     state.tab = tab;
-    for (const t of ['gps','address']) { const active = t === tab; $(t + 'Tab').setAttribute('aria-selected', String(active)); $(t + 'Tab').tabIndex = active ? 0 : -1; }
+    for (const t of ['gps','address','timeline']) { const active = t === tab; $(t + 'Tab').setAttribute('aria-selected', String(active)); $(t + 'Tab').tabIndex = active ? 0 : -1; }
     $('dataTablePanel').setAttribute('aria-labelledby', tab + 'Tab');
     $('dataTablePanel').scrollTop = 0; renderTable();
   }
+  // The table and maps always use the same filtered chronological copy.
+  // The original photo array and IDs are never sorted or renumbered here.
+  function getTimelineRows() {
+    return Core.buildTimelineRows(getVisible());
+  }
+  function renderTimelineInfo(rows) {
+    $('timelineInfo').hidden = state.tab !== 'timeline';
+    $('timelineDirectKey').hidden = rows.length <= 2;
+    const last = rows[rows.length - 1];
+    $('timelineSummary').textContent = rows.length + (rows.length === 1 ? ' photo' : ' photos') +
+      (last ? ' · ' + Core.formatDuration(last.cumulativeMs) + ' · ' + Core.formatDistance(last.cumulativeMeters) : '');
+    const unknownZone = rows.some(row => !Number.isFinite(row.photo.captureTime.offsetMinutes));
+    $('timelineSummary').title = unknownZone ?
+      'Some EXIF time zones are missing. Recorded camera times are compared without guessing a time zone.' :
+      'Elapsed time and distance through the listed photos. The first-to-last connection is not added to these totals.';
+    if (unknownZone && last) $('timelineSummary').textContent += ' · camera times';
+  }
+  // Zoom changes only the on-screen transform, never pixels, EXIF or map state.
+  function createPhotoViewer() {
+    const stage = $('photoStage'), image = $('photoPreview');
+    const tools = $('photoZoomTools'), value = $('photoZoomValue');
+    const zoomIn = $('photoZoomIn'), zoomOut = $('photoZoomOut'), fit = $('photoZoomFit');
+    const MAX_ZOOM = 8, STEP = 1.25, EPSILON = 0.0001;
+    const view = {ready: false, scale: 1, x: 0, y: 0, width: 0, height: 0, fitWidth: 0, fitHeight: 0};
+    let mouse = null, touch = null, tap = null, lastTap = null, touchOwned = false;
+    let lastTouchTime = 0, frame = 0, printing = false;
+    const clamp = (v, low, high) => Math.max(low, Math.min(high, v));
+    const inTools = target => target instanceof Element && !!target.closest('.photo-zoom-tools');
+
+    function constrain() {
+      const maxX = Math.max(0, (view.fitWidth * view.scale - view.width) / 2);
+      const maxY = Math.max(0, (view.fitHeight * view.scale - view.height) / 2);
+      view.x = clamp(view.x, -maxX, maxX);
+      view.y = clamp(view.y, -maxY, maxY);
+      if (view.scale <= 1 + EPSILON) { view.scale = 1; view.x = 0; view.y = 0; }
+    }
+    function paint() {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      image.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
+      const enlarged = view.ready && view.scale > 1 + EPSILON;
+      stage.classList.toggle('is-photo-ready', view.ready);
+      stage.classList.toggle('is-photo-zoomed', enlarged);
+      stage.classList.toggle('is-photo-dragging', enlarged && !!(mouse || (touchOwned && touch)));
+      stage.tabIndex = view.ready ? 0 : -1;
+      tools.hidden = !view.ready;
+      zoomIn.disabled = !view.ready || view.scale >= MAX_ZOOM - EPSILON;
+      zoomOut.disabled = !enlarged;
+      fit.disabled = !view.ready;
+      value.textContent = Math.round(view.scale * 100) + '%';
+      value.setAttribute('aria-label', `Photo zoom ${Math.round(view.scale * 100)} percent of fitted size`);
+    }
+    function requestPaint() { if (!frame) frame = requestAnimationFrame(paint); }
+    function cancelGesture() {
+      const id = mouse?.id;
+      mouse = null; touch = null; tap = null; lastTap = null; touchOwned = false;
+      if (id !== undefined && stage.hasPointerCapture?.(id)) stage.releasePointerCapture(id);
+      stage.classList.remove('is-photo-dragging');
+    }
+    function reset() {
+      cancelGesture(); view.scale = 1; view.x = 0; view.y = 0; paint();
+    }
+    function suspend() {
+      view.ready = false; reset();
+    }
+    function measure() {
+      if (printing || !view.ready || !image.naturalWidth || !image.naturalHeight) return;
+      const {width, height} = stage.getBoundingClientRect();
+      if (!width || !height) return;
+      const ratio = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+      const fitWidth = image.naturalWidth * ratio, fitHeight = image.naturalHeight * ratio;
+      // Preserve the point at the centre when resizing or rotating the device.
+      if (view.fitWidth) view.x *= fitWidth / view.fitWidth;
+      if (view.fitHeight) view.y *= fitHeight / view.fitHeight;
+      Object.assign(view, {width, height, fitWidth, fitHeight});
+      constrain(); requestPaint();
+    }
+    function loaded() {
+      if (image.hidden || !image.complete || !image.naturalWidth) return;
+      view.ready = true; reset(); measure(); paint();
+    }
+    function point(clientX, clientY) {
+      const box = stage.getBoundingClientRect();
+      return {x: clientX - box.left - box.width / 2, y: clientY - box.top - box.height / 2};
+    }
+    function zoomTo(scale, from = {x: 0, y: 0}, to = from) {
+      if (!view.ready || printing || !Number.isFinite(scale)) return;
+      const next = clamp(scale, 1, MAX_ZOOM), ratio = next / view.scale;
+      // Keep the point below the cursor / two-finger midpoint under that point.
+      view.x = to.x - (from.x - view.x) * ratio;
+      view.y = to.y - (from.y - view.y) * ratio;
+      view.scale = next; constrain(); requestPaint();
+    }
+    function toggleZoom(at) { if (view.scale > 1 + EPSILON) reset(); else zoomTo(2, at); }
+    zoomIn.addEventListener('click', () => zoomTo(view.scale * STEP));
+    zoomOut.addEventListener('click', () => zoomTo(view.scale / STEP));
+    fit.addEventListener('click', reset);
+    stage.addEventListener('wheel', event => {
+      if (!view.ready || printing || inTools(event.target) || event.ctrlKey || event.metaKey) return;
+      // Ctrl/Cmd + wheel remains the browser's page zoom, outside this viewer.
+      if (!event.deltaY) return;
+      event.preventDefault();
+      const units = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? view.height : 1;
+      const delta = clamp(event.deltaY * units, -160, 160);
+      zoomTo(view.scale * Math.exp(-delta * 0.0025), point(event.clientX, event.clientY));
+    }, {passive: false});
+    stage.addEventListener('dblclick', event => {
+      if (!view.ready || inTools(event.target) || performance.now() - lastTouchTime < 650) return;
+      event.preventDefault(); toggleZoom(point(event.clientX, event.clientY));
+    });
+    image.addEventListener('dragstart', event => event.preventDefault());
+
+    // Pointer capture keeps a mouse/pen drag working past the tile's edge.
+    stage.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'touch' || event.button !== 0 || !view.ready || inTools(event.target)) return;
+      stage.focus({preventScroll: true});
+      if (view.scale <= 1 + EPSILON) return;
+      event.preventDefault();
+      mouse = {id: event.pointerId, x: event.clientX, y: event.clientY};
+      stage.setPointerCapture(event.pointerId); requestPaint();
+    });
+    stage.addEventListener('pointermove', event => {
+      if (!mouse || mouse.id !== event.pointerId) return;
+      if (!(event.buttons & 1)) { cancelGesture(); requestPaint(); return; }
+      view.x += event.clientX - mouse.x; view.y += event.clientY - mouse.y;
+      mouse.x = event.clientX; mouse.y = event.clientY;
+      constrain(); requestPaint();
+    });
+    for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+      stage.addEventListener(name, event => {
+        if (mouse?.id === event.pointerId) { cancelGesture(); requestPaint(); }
+      });
+    }
+
+    // Touch Events let an unzoomed one-finger swipe keep native page scrolling.
+    // Only a pinch or an already-enlarged photo claims the gesture. No touch
+    // handler is attached to the page, the maps, or the photo navigation buttons.
+    function touchSample(event) {
+      const points = Array.from(event.touches).filter(t => stage.contains(t.target) && !inTools(t.target));
+      if (!points.length) return null;
+      const a = points[0], b = points[1];
+      const centre = point(b ? (a.clientX + b.clientX) / 2 : a.clientX,
+        b ? (a.clientY + b.clientY) / 2 : a.clientY);
+      return {count: points.length, key: points.map(t => t.identifier).join(','), ...centre,
+        distance: b ? Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY) : 0};
+    }
+    stage.addEventListener('touchstart', event => {
+      if (!view.ready || inTools(event.target)) return;
+      const sample = touchSample(event); if (!sample) return;
+      lastTouchTime = performance.now();
+      touchOwned = touchOwned || sample.count > 1 || view.scale > 1 + EPSILON;
+      if (touchOwned && event.cancelable) event.preventDefault();
+      touch = sample;
+      tap = sample.count === 1 ? {x: sample.x, y: sample.y, time: lastTouchTime} : null;
+      if (sample.count > 1) lastTap = null;
+      requestPaint();
+    }, {passive: false});
+    stage.addEventListener('touchmove', event => {
+      if (!view.ready || !touch) return;
+      const next = touchSample(event); if (!next) return;
+      if (tap && Math.hypot(next.x - tap.x, next.y - tap.y) > 8) tap = null;
+      touchOwned = touchOwned || next.count > 1 || view.scale > 1 + EPSILON;
+      if (touchOwned && event.cancelable) event.preventDefault();
+      if (touchOwned && next.key === touch.key) {
+        if (next.count > 1 && touch.distance > 0) {
+          zoomTo(view.scale * next.distance / touch.distance, touch, next);
+        } else if (next.count === 1 && view.scale > 1 + EPSILON) {
+          view.x += next.x - touch.x; view.y += next.y - touch.y;
+          constrain(); requestPaint();
+        }
+      }
+      touch = next;
+    }, {passive: false});
+    function endTouch(event) {
+      if (!touch) return;
+      const next = touchSample(event), now = performance.now();
+      if (touchOwned && event.cancelable) event.preventDefault();
+      if (event.type === 'touchcancel') {
+        cancelGesture(); requestPaint(); return;
+      }
+      if (!next && tap && now - tap.time < 280) {
+        if (lastTap && now - lastTap.time < 330 && Math.hypot(tap.x - lastTap.x, tap.y - lastTap.y) < 24) {
+          if (event.cancelable) event.preventDefault();
+          toggleZoom(tap); lastTap = null;
+        } else lastTap = {x: tap.x, y: tap.y, time: now};
+      } else lastTap = null;
+      touch = next; tap = null; lastTouchTime = now;
+      if (!next) touchOwned = false;
+      requestPaint();
+    }
+    stage.addEventListener('touchend', endTouch, {passive: false});
+    stage.addEventListener('touchcancel', endTouch, {passive: false});
+
+    stage.addEventListener('keydown', event => {
+      if (!view.ready || event.ctrlKey || event.metaKey || event.altKey) return;
+      let handled = true;
+      if (event.key === '+' || event.key === '=') zoomTo(view.scale * STEP);
+      else if (event.key === '-' || event.key === '−') zoomTo(view.scale / STEP);
+      else if (event.key === '0' || event.key === 'Home' || event.key === 'Escape') reset();
+      else if (view.scale > 1 + EPSILON && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        const step = event.shiftKey ? 100 : 40;
+        if (event.key === 'ArrowLeft') view.x += step;
+        if (event.key === 'ArrowRight') view.x -= step;
+        if (event.key === 'ArrowUp') view.y += step;
+        if (event.key === 'ArrowDown') view.y -= step;
+        constrain(); requestPaint();
+      } else handled = false;
+      if (handled) { event.preventDefault(); event.stopPropagation(); }
+    });
+    window.addEventListener('blur', () => { cancelGesture(); requestPaint(); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) cancelGesture(); else measure();
+    });
+    if (window.ResizeObserver) new ResizeObserver(measure).observe(stage);
+    window.addEventListener('resize', measure);
+    window.addEventListener('beforeprint', () => { printing = true; cancelGesture(); });
+    window.addEventListener('afterprint', () => { printing = false; requestAnimationFrame(measure); });
+    paint();
+    return {loaded, suspend};
+  }
+  const photoViewer = createPhotoViewer();
+
   function releasePreview() {
+    photoViewer.suspend();
     $('photoPreview').onload = null; $('photoPreview').onerror = null; $('photoPreview').removeAttribute('src');
     const reader = state.previewReader;
     state.previewReader = null;
@@ -403,6 +956,7 @@
       $('photoPreview').alt = p.file.name;
       const showPreviewError = () => {
         if (state.previewReader !== reader) return;
+        photoViewer.suspend();
         $('photoPreview').hidden = true; $('previewError').textContent = 'This browser cannot preview this file. Any readable GPS data is still listed in the table.'; $('previewError').hidden = false;
       };
       reader.onerror = showPreviewError;
@@ -411,6 +965,9 @@
         if (state.previewReader !== reader) return;
         state.previewURL = reader.result;
         $('photoPreview').onerror = showPreviewError;
+        $('photoPreview').onload = () => {
+          if (state.previewReader === reader) photoViewer.loaded();
+        };
         $('photoPreview').src = reader.result;
       };
       reader.readAsDataURL(p.file);
@@ -445,6 +1002,7 @@
     for (const p of state.photos) if (['queued','loading'].includes(p.addressStatus)) p.addressStatus = 'idle';
   }
   function clearSession(announce = true) {
+    clearTimelineMaps();
     state.generation++; stopAddressSearch(); releasePreview();
     state.photos = []; state.selected = null; state.processed = 0; state.busy = false; state.addressCache.clear(); state.mapStyles.clear(); state.ignored = 0;
     $('photoEmpty').hidden = false; $('photoPreview').hidden = true; $('previewError').hidden = true; $('gpsStamp').hidden = true;
@@ -581,6 +1139,211 @@
     document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url),1000);
     toast(state.geocoder ? 'CSV exported. Address searches still in progress are marked as pending.' : 'CSV exported with all selected photos.');
   }
+  // Timeline owns only these unmanaged layers; the existing map layer drawers,
+  // numbered markers, selected photo, linked views and map positions stay intact.
+  const timelineMapLayers = new Map();
+  let timelineMapRows = [];
+
+  function removeTimelineMapLayer(item, record) {
+    record.disposed = true;
+    if (record.view && record.rotationListener) record.view.un('change:rotation', record.rotationListener);
+    if (record.viewListener) record.map.un('change:view', record.viewListener);
+    record.layer.setMap(null);
+    timelineMapLayers.delete(item);
+  }
+
+  function clearTimelineMaps() {
+    for (const [item, record] of timelineMapLayers) removeTimelineMapLayer(item, record);
+    timelineMapRows = [];
+  }
+
+  function timelineCoordinate(photo, projection) {
+    if (!photo.hasGPS || !Number.isFinite(photo.latitude) || !Number.isFinite(photo.longitude)
+        || Math.abs(photo.latitude) > 85.05112878 || Math.abs(photo.longitude) > 180) return null;
+    const coordinate = window.ol.proj.transform([photo.longitude, photo.latitude], 'EPSG:4326', projection);
+    return coordinate.every(Number.isFinite) ? coordinate : null;
+  }
+
+  function makeTimelineMapFeatures(rows, projection) {
+    const ol = window.ol;
+    const coordinates = rows.map(row => timelineCoordinate(row.photo, projection));
+    const features = [];
+    function addConnection(firstIndex, lastIndex, direct) {
+      const first = rows[firstIndex], last = rows[lastIndex];
+      const start = coordinates[firstIndex], end = coordinates[lastIndex];
+      // Preserve the table's adjacency: an unprojectable row never creates an
+      // unrequested link past it. The explicit first-to-last link is independent.
+      if (!start || !end) return;
+      const milliseconds = direct ? last.timestampMs - first.timestampMs : last.deltaMs;
+      const distance = direct ? Core.distanceBetweenPhotos(first.photo, last.photo) : last.distanceMeters;
+      if (!Number.isFinite(milliseconds) || !Number.isFinite(distance)) return;
+      features.push(new ol.Feature({
+        geometry: new ol.geom.LineString([start, end]),
+        timelineDirect: direct,
+        fromPhotoId: first.photo.id,
+        toPhotoId: last.photo.id,
+        timelineTimeMs: milliseconds,
+        timelineDistanceMeters: distance,
+        timelineTimeLabel: (direct ? 'Total: ' : '') + Core.formatDuration(Math.round(milliseconds / 1000) * 1000),
+        timelineDistanceLabel: (direct ? 'Direct: ' : '') + Core.formatDistance(distance)
+      }));
+    }
+    for (let index = 1; index < rows.length; index++) addConnection(index - 1, index, false);
+    if (rows.length > 2) addConnection(0, rows.length - 1, true);
+    return {features, coordinates: coordinates.filter(Boolean)};
+  }
+
+  function timelineLabelStyle(point, text, offsetY, color) {
+    const ol = window.ol;
+    return new ol.style.Style({
+      geometry: point,
+      text: new ol.style.Text({
+        text, font: '600 11px sans-serif', textAlign: 'center', textBaseline: 'middle',
+        offsetY, rotateWithView: false,
+        fill: new ol.style.Fill({color}),
+        stroke: new ol.style.Stroke({color: '#fff', width: 3}),
+        backgroundFill: new ol.style.Fill({color: 'rgba(255,255,255,.9)'}),
+        padding: [2, 4, 2, 4]
+      }),
+      zIndex: 5
+    });
+  }
+
+  function timelineMapStyles(record, resolution) {
+    if (!(resolution > 0) || !Number.isFinite(resolution)) return new Map();
+    const rotation = record.map.getView().getRotation() || 0;
+    if (record.layout?.resolution === resolution && record.layout.rotation === rotation) return record.layout.styles;
+    const ol = window.ol, styles = new Map(), occupied = [];
+    const origin = record.coordinates[0] || [0, 0];
+    const cos = Math.cos(rotation), sin = Math.sin(rotation);
+    // Relative screen coordinates are sufficient for collision checks. Panning
+    // moves every label equally, so it does not require rebuilding these styles.
+    const screenPoint = coordinate => {
+      const x = coordinate[0] - origin[0], y = coordinate[1] - origin[1];
+      return [(x * cos + y * sin) / resolution, (x * sin - y * cos) / resolution];
+    };
+    for (const coordinate of record.coordinates) {
+      const [x, y] = screenPoint(coordinate);
+      occupied.push({left: x - 17, right: x + 17, top: y - 17, bottom: y + 17});
+    }
+    const overlaps = box => occupied.some(other => box.left < other.right + 3 && box.right > other.left - 3
+      && box.top < other.bottom + 3 && box.bottom > other.top - 3);
+    function labelOffset(midpoint, text, above, direct) {
+      const [x, y] = screenPoint(midpoint), halfWidth = Math.min(180, text.length * 3.5 + 6);
+      let offset = direct ? 26 : 18, box;
+      do {
+        const centreY = y + (above ? -offset : offset);
+        box = {left: x - halfWidth, right: x + halfWidth, top: centreY - 9, bottom: centreY + 9};
+        if (!overlaps(box) || offset >= 172) break;
+        offset += 22;
+      } while (true);
+      occupied.push(box);
+      return above ? -offset : offset;
+    }
+
+    for (const feature of record.features) {
+      const [start, end] = feature.getGeometry().getCoordinates();
+      const direct = feature.get('timelineDirect'), color = direct ? '#b85c23' : '#126c9f';
+      const dx = end[0] - start[0], dy = end[1] - start[1], length = Math.hypot(dx, dy);
+      const midpoint = [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2];
+      const point = new ol.geom.Point(midpoint), dash = direct ? [8, 6] : undefined;
+      // Both the leg and the direct connection are exactly straight. The line
+      // reaches each photo; the existing higher marker layer covers its ends.
+      const featureStyles = [
+        new ol.style.Style({stroke: new ol.style.Stroke({color: 'rgba(255,255,255,.8)', width: 4.5, lineDash: dash}), zIndex: 1}),
+        new ol.style.Style({stroke: new ol.style.Stroke({color, width: 2.3, lineDash: dash}), zIndex: 2})
+      ];
+      if (length > 2 * resolution) {
+        const ux = dx / length, uy = dy / length;
+        // Offset the two types of arrowhead slightly along the same straight
+        // line so the extra direct arrow does not hide the last leg's head.
+        const gap = Math.min((direct ? 32 : 18) * resolution, length * .3);
+        const tip = [end[0] - ux * gap, end[1] - uy * gap];
+        const head = Math.min(10 * resolution, length * .28), halfWidth = head * .45;
+        const base = [tip[0] - ux * head, tip[1] - uy * head];
+        featureStyles.push(new ol.style.Style({
+          geometry: new ol.geom.Polygon([[tip,
+            [base[0] - uy * halfWidth, base[1] + ux * halfWidth],
+            [base[0] + uy * halfWidth, base[1] - ux * halfWidth], tip]]),
+          fill: new ol.style.Fill({color}), stroke: new ol.style.Stroke({color: '#fff', width: 1}), zIndex: 3
+        }));
+      } else {
+        // A coincident pair has no geometric direction or invented displacement.
+        // Keep a point symbol and its real duration/distance labels at that spot.
+        featureStyles.push(new ol.style.Style({
+          geometry: point,
+          image: new ol.style.Circle({radius: 4, fill: new ol.style.Fill({color}), stroke: new ol.style.Stroke({color: '#fff', width: 1})}),
+          zIndex: 3
+        }));
+      }
+      const time = feature.get('timelineTimeLabel'), distance = feature.get('timelineDistanceLabel');
+      featureStyles.push(timelineLabelStyle(point, time, labelOffset(midpoint, time, true, direct), color));
+      featureStyles.push(timelineLabelStyle(point, distance, labelOffset(midpoint, distance, false, direct), color));
+      styles.set(feature, featureStyles);
+    }
+    record.layout = {resolution, rotation, styles};
+    return styles;
+  }
+
+  function watchTimelineMapView(record) {
+    const view = record.map.getView();
+    if (record.view === view) return;
+    if (record.view && record.rotationListener) record.view.un('change:rotation', record.rotationListener);
+    record.view = view;
+    record.rotationListener = () => { record.layout = null; record.layer.changed(); };
+    view.on('change:rotation', record.rotationListener);
+    record.layout = null;
+  }
+
+  function updateTimelineMaps(rows = getTimelineRows()) {
+    if (state.tab !== 'timeline' || !window.ol || rows.length < 2) { clearTimelineMaps(); return; }
+    timelineMapRows = rows;
+    const current = new Set([...state.maps.values()].filter(item => item.ready && item.map));
+    for (const [item, record] of timelineMapLayers) {
+      if (!current.has(item) || item.map !== record.map) removeTimelineMapLayer(item, record);
+    }
+    // Do not recreate an overlay for photo selection, address lookup updates or
+    // other table renders whose actual Timeline coordinates/times did not change.
+    const signature = JSON.stringify(rows.map(row => [row.photo.id, row.photo.hasGPS, row.photo.latitude,
+      row.photo.longitude, row.timestampMs, row.deltaMs, row.distanceMeters]));
+    for (const item of current) {
+      const projection = item.map.getView().getProjection(), projectionCode = projection.getCode();
+      let record = timelineMapLayers.get(item);
+      if (record && record.signature === signature && record.projectionCode === projectionCode) continue;
+      const data = makeTimelineMapFeatures(rows, projection);
+      if (!data.features.length) {
+        if (record) removeTimelineMapLayer(item, record);
+        continue;
+      }
+      if (!record) {
+        const ol = window.ol;
+        record = {map: item.map, disposed: false, source: new ol.source.Vector({wrapX: false}),
+          layer: null, view: null, rotationListener: null, viewListener: null, layout: null};
+        record.layer = new ol.layer.Vector({
+          source: record.source, zIndex: 900, renderBuffer: 260,
+          updateWhileAnimating: true, updateWhileInteracting: true,
+          style: (feature, resolution) => timelineMapStyles(record, resolution).get(feature) || []
+        });
+        record.layer.set('ssfTimeline', true);
+        timelineMapLayers.set(item, record);
+        record.viewListener = () => {
+          if (record.disposed) return;
+          record.signature = null;
+          updateTimelineMaps(timelineMapRows);
+        };
+        record.map.on('change:view', record.viewListener);
+      }
+      record.signature = signature; record.projectionCode = projectionCode;
+      record.features = data.features; record.coordinates = data.coordinates; record.layout = null;
+      record.source.clear(); record.source.addFeatures(data.features);
+      watchTimelineMapView(record);
+      // Unmanaged native OL layers stay out of Geoportail's layer manager and
+      // avoid its asynchronous addLayer queue. The original readiness callback
+      // calls this function once item.ready is true; no map is fitted/recreated.
+      if (!record.attached) { record.layer.setMap(record.map); record.attached = true; }
+    }
+  }
+
   function mapNotice(id,title,message) {
     const el = $('mapNotice'+id), strong = document.createElement('strong'), p = document.createElement('p');
     strong.textContent = title; p.textContent = message; el.replaceChildren(strong,p); el.hidden = false;
@@ -724,6 +1487,7 @@
         $('mapNotice'+id).hidden = true;
         const select = $('bgMap'+id).querySelector('select'); if (select) select.setAttribute('aria-label',id===3?'Overview map background':'Detail map background');
         watchMapSources(item); linkMapViews(); updateMarkers(); fitAllLocations(false);
+        updateTimelineMaps();
         for (const p of state.photos) projectPhoto(p);
         queueRender();
         $('serviceStatus').textContent = [...state.maps.values()].filter(m=>m.ready).length === 2 ? 'Geoportail map engine ready.' : 'Connecting the second map…';
@@ -768,8 +1532,15 @@
   $('exportCSV').addEventListener('click',exportCSV);
   $('previousPhoto').addEventListener('click',()=>navigatePhotos(-1)); $('nextPhoto').addEventListener('click',()=>navigatePhotos(1));
   $('tableBody').addEventListener('click',event=>{ const row=event.target.closest('tr[data-id]'); if(row) selectPhoto(Number(row.dataset.id)); });
-  $('gpsTab').addEventListener('click',()=>setTab('gps')); $('addressTab').addEventListener('click',()=>setTab('address'));
-  for(const id of ['gpsTab','addressTab']) $(id).addEventListener('keydown',event=>{ if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){ event.preventDefault(); const t=event.key==='Home'?'gps':event.key==='End'?'address':state.tab==='gps'?'address':'gps';setTab(t);$(t+'Tab').focus(); } });
+  $('gpsTab').addEventListener('click',()=>setTab('gps')); $('addressTab').addEventListener('click',()=>setTab('address')); $('timelineTab').addEventListener('click',()=>setTab('timeline'));
+  for (const name of ['gps','address','timeline']) $(name+'Tab').addEventListener('keydown',event=>{
+    if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+    event.preventDefault();
+    const tabs = ['gps','address','timeline'], index = tabs.indexOf(name);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 :
+      (index + (event.key === 'ArrowLeft' ? -1 : 1) + tabs.length) % tabs.length;
+    setTab(tabs[next]); $(tabs[next]+'Tab').focus();
+  });
   $('filterPhotos').addEventListener('input',event=>{state.filter=event.target.value.trim();queueRender();});
   $('onlineAddresses').addEventListener('change',()=>{ if($('onlineAddresses').checked) void findAddresses(); else {stopAddressSearch();summaryStatus();queueRender();} });
   $('retryAddresses').addEventListener('click',()=>void findAddresses()); $('linkMaps').addEventListener('change',linkMapViews);
@@ -786,7 +1557,7 @@
     catch(error){console.warn(error);toast('This layer could not be added. Verify its ID and availability.');}
   }));
   document.addEventListener('keydown',event=>{
-    const target=event.target;if($('helpDialog').open||target.closest('input,select,textarea,[role=tablist],.map,[contenteditable=true]'))return;
+    const target=event.target;if(document.querySelector('dialog[open]')||target.closest('input,select,textarea,[role=tablist],.map,[contenteditable=true]'))return;
     if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();navigatePhotos(event.key==='ArrowLeft'?-1:1);}
     if(event.key==='Escape')MAP_IDS.forEach(id=>toggleLayers(id,false));
   });
@@ -820,6 +1591,444 @@
   const mapPoll=setInterval(()=>{attempts++;if(initialiseMaps()||attempts>480)clearInterval(mapPoll);},250);
   setTimeout(()=>{if(!state.mapStarted)mapUnavailable();},15000);
   window.addEventListener('online',()=>{if(!state.mapStarted)initialiseMaps();});
+})();
+
+</script>
+<script id="screenCaptureScript">
+/* Screen export, entirely local and dependency-free.
+   Freeze computed SCREEN styles and canvas pixels before any await or dialog.
+   SVG foreignObject uses the browser's own layout engine (not a manual HTML painter).
+   When canvas readback is protected, print the frozen DOM/canvases instead.
+   No getDisplayMedia, screenshot server, analytics, or permission bypass. */
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const XHTML = 'http://www.w3.org/1999/xhtml';
+  const SVG = 'http://www.w3.org/2000/svg';
+  const button = $('captureScreen'), dialog = $('captureDialog');
+  let current = null, job = 0;
+  const encode = value => new TextEncoder().encode(value);
+  const important = (node, values) => {
+    for (const [name, value] of Object.entries(values)) node.style.setProperty(name, String(value), 'important');
+  };
+  function copyStyle(from, to) {
+    for (const name of from) {
+      let value = from.getPropertyValue(name);
+      // Preserve dimensions in custom properties so serialization does not round
+      // them a second time. Exact measured box dimensions are restored below.
+      if (['width','height','min-width','min-height','max-width','max-height','grid-template-columns','grid-template-rows','flex-basis'].includes(name)) {
+        // Custom properties preserve the full decimal string during SVG serialization;
+        // ordinary CSS dimensions would be rounded to 6 significant digits again.
+        to.style.setProperty('--ssf-'+name, value);
+        value = 'var(--ssf-'+name+')';
+      }
+      to.style.setProperty(name, value);
+    }
+    important(to, {'animation': 'none', 'transition': 'none', 'caret-color': 'transparent', 'scroll-behavior': 'auto'});
+  }
+  const overlap = (a, b) => a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom;
+  function fileName(date) {
+    const pad = n => String(n).padStart(2, '0');
+    return 'SnapShotFinder-' + date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate()) +
+      '_' + pad(date.getHours()) + '-' + pad(date.getMinutes()) + '-' + pad(date.getSeconds());
+  }
+  function removeSnapshot(snapshot) {
+    if (!snapshot) return;
+    snapshot.frame?.remove();
+    for (const url of snapshot.urls || []) URL.revokeObjectURL(url);
+    if (snapshot.canvas) { snapshot.canvas.width = 1; snapshot.canvas.height = 1; }
+  }
+  function resetPreview() {
+    $('captureImage').removeAttribute('src'); $('captureImage').hidden = true;
+    $('capturePreview').hidden = true; $('captureFrameBox').hidden = true;
+    $('captureFrameBox').replaceChildren(); $('captureWarning').hidden = true;
+    $('downloadScreenPNG').removeAttribute('href'); $('downloadScreenPNG').setAttribute('aria-disabled', 'true');
+    $('downloadScreenPNG').tabIndex = -1; $('downloadScreenPDF').disabled = true;
+    $('printScreenPDF').hidden = true; $('printScreenPDF').disabled = false;
+  }
+  function freezeScreen() {
+    const vp = window.visualViewport;
+    const x = vp?.offsetLeft || 0, y = vp?.offsetTop || 0;
+    const width = Math.max(1, Math.round(vp?.width || window.innerWidth));
+    const height = Math.max(1, Math.round(vp?.height || window.innerHeight));
+    const area = {left:x, top:y, right:x+width, bottom:y+height};
+    const snap = {width, height, date:new Date(), urls:[], pixels:new Map(), sticky:[], backgrounds:[], protected:false, frame:null};
+    snap.name = fileName(snap.date);
+    // Bound raster memory on high-density phones and large desktops.
+    snap.ratio = Math.min(Math.max(1, (window.devicePixelRatio || 1) * (vp?.scale || 1)), 2,
+      8192 / width, 8192 / height, Math.sqrt(12000000 / (width * height)));
+    const root = document.createElementNS(XHTML, 'div');
+    root.id = 'ssfFrozenViewport';
+    root.style.cssText = `position:relative;width:${width}px;height:${height}px;overflow:hidden;background:${getComputedStyle(document.body).backgroundColor};`;
+    snap.root = root;
+    const omit = /^(SCRIPT|STYLE|LINK|META|NOSCRIPT|IFRAME|DIALOG)$/;
+
+    function clone(source, clip, transformedAncestor = false) {
+      if (source.nodeType === Node.TEXT_NODE) return source.cloneNode(false);
+      if (!(source instanceof Element) || omit.test(source.tagName) || source.id === 'toast' || source.id === 'dropOverlay' || source.id === 'captureFloating') return null;
+      const style = getComputedStyle(source);
+      if (style.display === 'none') return null;
+      const rect = source.getBoundingClientRect();
+      const target = source === document.body ? document.createElementNS(XHTML, 'div') : source.cloneNode(false);
+      for (const attr of Array.from(target.attributes)) {
+        if (/^on/i.test(attr.name) || ['autofocus','autoplay','srcset','sizes','loading','contenteditable'].includes(attr.name)) target.removeAttribute(attr.name);
+      }
+      copyStyle(style, target);
+      // getComputedStyle rounds dimensions; getBoundingClientRect retains the
+      // browser's own precision (including Firefox's different layout grid).
+      // Do not substitute transformed image/canvas bounds for their layout size.
+      if (source instanceof HTMLElement && !transformedAncestor && style.transform === 'none') {
+        for (const [name, sides] of [['width',['Left','Right']], ['height',['Top','Bottom']]]) {
+          if (!/^[\d.]+px$/.test(style[name]) || !(rect[name]>0)) continue;
+          let exact=rect[name];
+          if (style.boxSizing !== 'border-box')
+            for (const side of sides) exact -= (parseFloat(style['padding'+side])||0)+(parseFloat(style['border'+side+'Width'])||0);
+          target.style.setProperty('--ssf-'+name, Math.max(0,exact)+'px');
+        }
+      }
+      // Toolbar labels that occupy one line on screen must not be rewrapped
+      // when native buttons are laid out again in the export iframe/SVG.
+      // Keep their measured width instead of letting flex shrink them again.
+      // This affects only the frozen copy; genuinely multiline labels stay so.
+      if (source.matches('.actions > button, .data-tools > button')) {
+        const lineTops = [];
+        for (const child of source.childNodes) {
+          if (child.nodeType !== Node.TEXT_NODE || !child.textContent.trim()) continue;
+          const range = document.createRange(); range.selectNodeContents(child);
+          for (const line of range.getClientRects()) {
+            if (line.width > 0 && line.height > 0 && !lineTops.some(top => Math.abs(top - line.top) < 1)) lineTops.push(line.top);
+          }
+        }
+        if (lineTops.length === 1) important(target, {
+          'white-space':'nowrap', 'overflow-wrap':'normal', 'word-break':'normal',
+          'display':'inline-flex', 'align-items':'center', 'justify-content':'center',
+          'flex':'0 0 auto'
+        });
+      }
+      if (source === document.body) {
+        important(target, {position:'absolute',left:(rect.left-x)+'px',top:(rect.top-y)+'px',right:'auto',bottom:'auto',margin:'0',transform:'none'});
+      }
+      if (style.position === 'fixed') {
+        // The application only has transient fixed notices, which are excluded above.
+        important(target, {position:'absolute',left:(rect.left-x)+'px',top:(rect.top-y)+'px',right:'auto',bottom:'auto'});
+      }
+      if (style.position === 'sticky') {
+        important(target, {position:'relative',top:'auto',right:'auto',bottom:'auto',left:'auto'});
+        snap.sticky.push({target, left:rect.left-x, top:rect.top-y, transform:style.transform});
+      }
+      // Off-screen blocks keep their measured geometry but not their expensive contents.
+      const visible = (rect.width > 0 && rect.height > 0 && overlap(rect, clip)) || source === document.body || style.display === 'contents' || source.matches('thead,thead tr,option,optgroup');
+      if (!visible) { if (source instanceof HTMLCanvasElement) { target.width=0; target.height=0; } return target; }
+      for (const property of ['background-image','border-image-source','list-style-image','mask-image','-webkit-mask-image']) {
+        const value = style.getPropertyValue(property);
+        if (value && value.includes('url(')) snap.backgrounds.push({target, property, value});
+      }
+      if (source instanceof HTMLCanvasElement) {
+        target.width = source.width; target.height = source.height;
+        if (source.width && source.height) {
+          try {
+            target.getContext('2d').drawImage(source, 0, 0);
+            try { snap.pixels.set(target, target.toDataURL('image/png')); }
+            catch (_) { snap.protected = true; }
+          } catch (_) { snap.protected = true; }
+        }
+        return target;
+      }
+      if (source instanceof HTMLImageElement) {
+        target.removeAttribute('src');
+        if (source.complete && source.naturalWidth && source.currentSrc) {
+          if (source.currentSrc.startsWith('data:')) target.src = source.currentSrc;
+          else {
+            // Freeze the image actually loaded at click time, not a future network reply.
+            const pixels = document.createElement('canvas');
+            pixels.width = source.naturalWidth; pixels.height = source.naturalHeight;
+            pixels.getContext('2d').drawImage(source, 0, 0);
+            try { target.src = pixels.toDataURL('image/png'); }
+            catch (_) {
+              copyStyle(style, pixels); snap.protected = true;
+              return pixels; // Printing is allowed to paint this protected canvas.
+            }
+          }
+        }
+        target.removeAttribute('crossorigin');
+        return target;
+      }
+      if (source instanceof HTMLInputElement) {
+        target.setAttribute('value', source.value);
+        target.toggleAttribute('checked', source.checked);
+        if (source.indeterminate) snap.protected = true;
+      }
+      if (source instanceof HTMLTextAreaElement) { target.textContent = source.value; return target; }
+      let nextClip = {...clip};
+      if (/(hidden|clip|auto|scroll)/.test(style.overflowX)) { nextClip.left=Math.max(clip.left,rect.left); nextClip.right=Math.min(clip.right,rect.right); }
+      if (/(hidden|clip|auto|scroll)/.test(style.overflowY)) { nextClip.top=Math.max(clip.top,rect.top); nextClip.bottom=Math.min(clip.bottom,rect.bottom); }
+      let holder = target;
+      if (source !== document.body && (source.scrollLeft || source.scrollTop)) {
+        // SVG does not serialize scrollTop/scrollLeft. Move a frozen inner wrapper instead.
+        const wrapper = document.createElementNS(XHTML, 'div');
+        const innerWidth = Math.max(0, source.scrollWidth - parseFloat(style.paddingLeft||0) - parseFloat(style.paddingRight||0));
+        wrapper.style.cssText = `position:relative;display:block;box-sizing:content-box;width:${innerWidth}px;height:${source.scrollHeight}px;transform:translate(${-source.scrollLeft}px,${-source.scrollTop}px);transform-origin:0 0;`;
+        important(target, {'overflow':'hidden'});
+        target.appendChild(wrapper); holder = wrapper;
+      }
+      for (const child of source.childNodes) {
+        const item = clone(child, nextClip, transformedAncestor || style.transform !== 'none'); if (item) holder.appendChild(item);
+      }
+      if (source instanceof HTMLSelectElement) {
+        Array.from(target.options).forEach((option, index) => option.toggleAttribute('selected', source.options[index].selected));
+      }
+      return target;
+    }
+    root.appendChild(clone(document.body, area));
+    const frame = document.createElement('iframe');
+    frame.className = 'capture-work-frame'; frame.title = 'Frozen screen for local export';
+    frame.setAttribute('aria-hidden', 'true'); frame.tabIndex = -1;
+    frame.width = width; frame.height = height;
+    // No live application scripts, timers or print handlers are copied into this document.
+    document.body.appendChild(frame); snap.frame = frame;
+    const doc = frame.contentDocument;
+    doc.open(); doc.write('<!doctype html><html lang="en"><head><meta charset="utf-8"><title></title></head><body></body></html>'); doc.close();
+    doc.title = snap.name;
+    const pageStyle = doc.createElement('style');
+    pageStyle.textContent = `html,body{margin:0;padding:0;width:${width}px;height:${height}px;overflow:hidden;background:white}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important} @page{size:${width*.75}pt ${height*.75}pt;margin:0}`;
+    doc.head.appendChild(pageStyle); doc.body.appendChild(root);
+    // Make sticky table headers agree with their exact visible position after scroll freezing.
+    const rootRect = root.getBoundingClientRect();
+    for (const entry of snap.sticky) {
+      if (!entry.target.isConnected) continue;
+      const r = entry.target.getBoundingClientRect();
+      const dx = entry.left - (r.left-rootRect.left), dy = entry.top - (r.top-rootRect.top);
+      important(entry.target, {transform:`translate(${dx}px,${dy}px)` + (entry.transform !== 'none' ? ' '+entry.transform : '')});
+    }
+    return snap;
+  }
+
+  function waitImage(image, source) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => finish(new Error('Image rendering timed out.')), 12000);
+      function finish(error) { clearTimeout(timer); image.onload = image.onerror = null; error ? reject(error) : resolve(image); }
+      image.onload = () => finish(); image.onerror = () => finish(new Error('The browser could not render this snapshot.'));
+      image.src = source;
+    });
+  }
+  async function inlineBackgrounds(snap) {
+    const cache = new Map();
+    function load(url) {
+      if (!cache.has(url)) cache.set(url, (async () => {
+        const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 6000);
+        try {
+          const response = await fetch(url, {mode:'cors', credentials:'omit', signal:controller.signal});
+          if (!response.ok) throw new Error('A background image is protected.');
+          const blob = await response.blob();
+          if (blob.size > 12000000) throw new Error('A background image is too large.');
+          return await new Promise((resolve, reject) => {
+            const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('Background read failed.')); reader.readAsDataURL(blob);
+          });
+        } finally { clearTimeout(timeout); }
+      })());
+      return cache.get(url);
+    }
+    await Promise.all(snap.backgrounds.map(async entry => {
+      let value = entry.value;
+      const matches = Array.from(value.matchAll(/url\(["']?([^"')]+)["']?\)/g));
+      for (const match of matches) {
+        const url = match[1];
+        if (url.startsWith('data:') || url.startsWith('#')) continue;
+        const embedded = await load(url); value = value.replace(match[0], `url("${embedded}")`);
+      }
+      entry.target.style.setProperty(entry.property, value);
+    }));
+  }
+  async function renderSnapshot(snap) {
+    if (snap.protected) throw new Error('Map pixels are protected by the browser.');
+    await inlineBackgrounds(snap);
+    const clone = snap.root.cloneNode(true);
+    const originals = Array.from(snap.root.querySelectorAll('canvas'));
+    const copies = Array.from(clone.querySelectorAll('canvas'));
+    for (let i=0; i<copies.length; i++) {
+      const data = snap.pixels.get(originals[i]);
+      if (!data && originals[i].width && originals[i].height) throw new Error('A map cannot be exported as an image.');
+      const image = document.createElementNS(XHTML, 'img');
+      for (const attr of Array.from(copies[i].attributes)) image.setAttribute(attr.name, attr.value);
+      if (data) image.src = data;
+      copies[i].replaceWith(image);
+    }
+    const svg = document.createElementNS(SVG, 'svg');
+    svg.setAttribute('width', snap.width); svg.setAttribute('height', snap.height+2);
+    svg.setAttribute('viewBox', `0 0 ${snap.width} ${snap.height+2}`);
+    const foreign = document.createElementNS(SVG, 'foreignObject');
+    foreign.setAttribute('x','0'); foreign.setAttribute('y','0'); foreign.setAttribute('width','100%'); foreign.setAttribute('height','100%');
+    const outer = document.createElementNS(XHTML, 'div');
+    outer.style.cssText = `position:relative;width:${snap.width}px;height:${snap.height+2}px;margin:0;padding:0;`;
+    outer.appendChild(clone);
+    // A swatch outside the saved area detects browsers that omit foreignObject content.
+    const swatch = document.createElementNS(XHTML, 'div');
+    swatch.style.cssText = `position:absolute;left:0;top:${snap.height}px;width:4px;height:2px;background:rgb(19,119,73)`;
+    outer.appendChild(swatch); foreign.appendChild(outer); svg.appendChild(foreign);
+    const xml = new XMLSerializer().serializeToString(svg);
+    if (xml.length > 40000000) throw new Error('Use PDF printing for this large view.');
+    const image = await waitImage(new Image(), 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml));
+    const test = document.createElement('canvas'); test.width = snap.width; test.height = snap.height+2;
+    const ctx = test.getContext('2d'); ctx.drawImage(image,0,0);
+    const check = ctx.getImageData(1,snap.height,1,1).data;
+    if (Math.abs(check[0]-19)>3 || Math.abs(check[1]-119)>3 || check[3]<250) throw new Error('This browser requires the PDF printing fallback.');
+    const canvas = document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(snap.width*snap.ratio)); canvas.height=Math.max(1,Math.round(snap.height*snap.ratio));
+    const context = canvas.getContext('2d', {alpha:false});
+    if (!context) throw new Error('Canvas export is unavailable.');
+    context.fillStyle='#ffffff'; context.fillRect(0,0,canvas.width,canvas.height);
+    context.drawImage(image,0,0,snap.width,snap.height,0,0,canvas.width,canvas.height);
+    test.width=1; test.height=1;
+    const png = await new Promise((resolve,reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('PNG export is unavailable.')), 'image/png'));
+    return {canvas, png};
+  }
+
+  /* A one-page, lossless image PDF. PDF image streams contain RGB samples, not
+     a PNG file. Deflate compression is optional; the raw fallback is also valid. */
+  async function makePDF(snap) {
+    const canvas = snap.canvas, width=canvas.width, height=canvas.height;
+    const rgba=canvas.getContext('2d').getImageData(0,0,width,height).data;
+    const rgb=new Uint8Array(width*height*3);
+    for(let p=0,q=0;p<rgba.length;p+=4){rgb[q++]=rgba[p];rgb[q++]=rgba[p+1];rgb[q++]=rgba[p+2];}
+    let bytes=rgb, filter='';
+    if (typeof CompressionStream === 'function') {
+      try {
+        const compressed=new Blob([rgb]).stream().pipeThrough(new CompressionStream('deflate'));
+        bytes=new Uint8Array(await new Response(compressed).arrayBuffer());filter=' /Filter /FlateDecode';
+      } catch (_) { /* Uncompressed RGB still produces a valid lossless PDF. */ }
+    }
+    const pw=Number((snap.width*.75).toFixed(3)), ph=Number((snap.height*.75).toFixed(3));
+    const commands=encode(`q\n${pw} 0 0 ${ph} 0 0 cm\n/Screen Do\nQ\n`);
+    const objects=[
+      [encode('<< /Type /Catalog /Pages 2 0 R >>')],
+      [encode('<< /Type /Pages /Kids [3 0 R] /Count 1 >>')],
+      [encode(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Screen 4 0 R >> >> /Contents 5 0 R >>`)],
+      [encode(`<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} /ColorSpace /DeviceRGB /BitsPerComponent 8${filter} /Length ${bytes.length} >>\nstream\n`),bytes,encode('\nendstream')],
+      [encode(`<< /Length ${commands.length} >>\nstream\n`),commands,encode('endstream')],
+      [encode(`<< /Title (${snap.name}) /Creator (SnapShotFinder) /Producer (SnapShotFinder local screen export) >>`)]
+    ];
+    const parts=[], offsets=[0];let length=0;
+    const put = bytes => {parts.push(bytes);length+=bytes.length;};
+    put(encode('%PDF-1.4\n'));put(new Uint8Array([37,226,227,207,211,10]));
+    for(let i=0;i<objects.length;i++){
+      offsets.push(length);put(encode(`${i+1} 0 obj\n`));objects[i].forEach(put);put(encode('\nendobj\n'));
+    }
+    const xref=length;
+    put(encode(`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`));
+    for(const offset of offsets.slice(1))put(encode(String(offset).padStart(10,'0')+' 00000 n \n'));
+    put(encode(`trailer\n<< /Size ${objects.length+1} /Root 1 0 R /Info 6 0 R >>\nstartxref\n${xref}\n%%EOF\n`));
+    return new Blob(parts,{type:'application/pdf'});
+  }
+  async function showPrintFallback(snap, error) {
+    console.warn('Screen image export: using the frozen print view.', error);
+    $('captureStatus').textContent=`Frozen view · ${snap.width} × ${snap.height} · ${snap.date.toLocaleString()}`;
+    $('captureWarning').textContent='This browser or a map layer prevents direct image export. The frozen view below still includes its canvases. Use “Save as PDF / Print”, choose “Save as PDF”, enable background graphics, disable headers/footers and select no margins. The browser may scale the view to your paper size.';
+    $('captureWarning').hidden=false; $('capturePreview').hidden=false;
+    $('captureFrameBox').hidden=false;
+    snap.frame.className='';snap.frame.removeAttribute('aria-hidden');snap.frame.title='Frozen view to save as PDF';
+    // Keep the iframe alive: moving it into a different parent can reload it and clear canvases.
+    const frame=snap.frame;
+    frame.style.cssText='position:fixed;left:-100000px;top:0;border:0;';
+    const visual=document.createElement('iframe');
+    visual.title='Frozen view preview';visual.width=snap.width;visual.height=snap.height;
+    $('captureFrameBox').appendChild(visual);
+    const previewDoc=visual.contentDocument;
+    previewDoc.open();previewDoc.write('<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>');previewDoc.close();
+    previewDoc.head.appendChild(snap.frame.contentDocument.head.querySelector('style').cloneNode(true));
+    const previewRoot=snap.root.cloneNode(true);previewDoc.body.appendChild(previewRoot);
+    const sources=snap.root.querySelectorAll('canvas'), copies=previewRoot.querySelectorAll('canvas');
+    for(let i=0;i<copies.length;i++) if(sources[i].width&&sources[i].height)copies[i].getContext('2d').drawImage(sources[i],0,0);
+    snap.previewFrame=visual;
+    const available=$('capturePreview').clientWidth;
+    const scale=Math.min(available/snap.width,(window.innerHeight*.58)/snap.height,1);
+    $('captureFrameBox').style.width=snap.width*scale+'px';$('captureFrameBox').style.height=snap.height*scale+'px';
+    visual.style.transform=`scale(${scale})`;
+    $('printScreenPDF').hidden=false;
+    $('printScreenPDF').disabled=true;
+    // A large local photo may still be decoding in the isolated print document.
+    await Promise.all(Array.from(snap.root.querySelectorAll('img')).map(image =>
+      image.complete ? Promise.resolve() : new Promise(resolve => {
+        const done=()=>{clearTimeout(timer);image.removeEventListener('load',done);image.removeEventListener('error',done);resolve();};
+        const timer=setTimeout(done,8000);image.addEventListener('load',done,{once:true});image.addEventListener('error',done,{once:true});
+      })));
+    if(current===snap) $('printScreenPDF').disabled=false;
+  }
+  async function capture() {
+    if(button.disabled) return;
+    const id=++job;
+    removeSnapshot(current);current=null;resetPreview();
+    let snap;
+    try {
+      // This synchronous step precedes opening the dialog or changing the toolbar button.
+      snap=freezeScreen();current=snap;
+    } catch(error) {
+      button.disabled=false;
+      $('captureStatus').textContent='The view could not be frozen. Close this dialog and try again.';
+      dialog.showModal();console.error('Snapshot setup failed:',error);return;
+    }
+    button.disabled=true;button.setAttribute('aria-busy','true');
+    $('captureStatus').textContent='Preparing the frozen view…';dialog.showModal();
+    try {
+      const result=await renderSnapshot(snap);
+      if(id!==job || current!==snap){result.canvas.width=1;result.canvas.height=1;return;}
+      snap.canvas=result.canvas;snap.png=result.png;
+      const url=URL.createObjectURL(result.png);snap.urls.push(url);
+      $('captureImage').src=url;$('captureImage').hidden=false;$('capturePreview').hidden=false;
+      $('capturePreview').classList.toggle('is-portrait',snap.height>snap.width);
+      const link=$('downloadScreenPNG');link.href=url;link.download=snap.name+'.png';link.tabIndex=0;link.setAttribute('aria-disabled','false');
+      $('downloadScreenPDF').disabled=false;
+      $('captureStatus').textContent=`Frozen view · ${snap.width} × ${snap.height} · ${snap.date.toLocaleString()}. Choose PNG or PDF; both keep this view.`;
+    } catch(error) {
+      if(id===job && current===snap) await showPrintFallback(snap,error);
+    } finally {
+      if(id===job){button.disabled=false;button.removeAttribute('aria-busy');}
+    }
+  }
+  button.addEventListener('click',capture);
+  const floating = $('captureFloating');
+  floating.addEventListener('click',capture);
+  function updateFloating() {
+    const r=button.getBoundingClientRect();
+    floating.hidden = r.bottom>0 && r.top<window.innerHeight && r.right>0 && r.left<window.innerWidth;
+  }
+  // The mobile toolbar scrolls away. A small camera button then preserves access
+  // without making the user scroll away from the view they want to capture.
+  if (typeof IntersectionObserver === 'function') {
+    const observer=new IntersectionObserver(updateFloating);observer.observe(button);
+  } else window.addEventListener('scroll', updateFloating, {passive:true});
+  window.addEventListener('resize',updateFloating);
+  updateFloating();
+  $('downloadScreenPDF').addEventListener('click',async()=>{
+    const snap=current;if(!snap?.canvas)return;
+    const pdfButton=$('downloadScreenPDF');pdfButton.disabled=true;
+    try{
+      const pdf=await makePDF(snap);if(current!==snap)return;
+      const url=URL.createObjectURL(pdf);snap.urls.push(url);
+      const link=document.createElement('a');link.href=url;link.download=snap.name+'.pdf';
+      document.body.appendChild(link);link.click();link.remove();
+    }catch(error){
+      $('captureWarning').textContent='Direct PDF export could not finish. Use Save as PDF / Print instead.';
+      $('captureWarning').hidden=false;$('printScreenPDF').hidden=false;console.warn(error);
+    }finally{if(current===snap)pdfButton.disabled=false;}
+  });
+  $('printScreenPDF').addEventListener('click',()=>{
+    if(!current?.frame)return;
+    try{current.frame.contentWindow.focus();current.frame.contentWindow.print();}
+    catch(error){$('captureWarning').textContent='Printing is unavailable in this browser. Use its built-in screenshot or Print/Save as PDF function.';console.warn(error);}
+  });
+  $('closeCapture').addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('close',()=>{
+    ++job;button.disabled=false;button.removeAttribute('aria-busy');
+    const old=current;current=null;resetPreview();
+    // Do not immediately revoke a link while a mobile browser is opening its download.
+    setTimeout(()=>removeSnapshot(old),60000);
+    button.focus({preventScroll:true});
+  });
+  window.addEventListener('resize',()=>{
+    const snap=current;if(!snap?.previewFrame)return;
+    const scale=Math.min($('capturePreview').clientWidth/snap.width,(window.innerHeight*.58)/snap.height,1);
+    $('captureFrameBox').style.width=snap.width*scale+'px';$('captureFrameBox').style.height=snap.height*scale+'px';snap.previewFrame.style.transform=`scale(${scale})`;
+  });
 })();
 
 </script>
