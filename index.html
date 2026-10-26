@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="color-scheme" content="light">
-    <meta name="application-version" content="2.8.8-slim">
+    <meta name="application-version" content="2.8.9-slim">
     <title>SnapShotFinder Slim — Photos into places</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%230c766e'/%3E%3Cpath d='M20 7a10 10 0 0 0-10 10c0 8 10 17 10 17s10-9 10-17A10 10 0 0 0 20 7' fill='white'/%3E%3Ccircle cx='20' cy='17' r='4' fill='%230c766e'/%3E%3C/svg%3E">
     <style>
@@ -2118,6 +2118,117 @@
       .legend-dot.filtered-dot {
         background: #bdd6e4
       }
+      .register-status-panel {
+        flex: 0 0 auto;
+        margin: 0 4px 6px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.45
+      }
+      .register-status-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px
+      }
+      .register-status-main>span {
+        min-width: 0;
+        overflow-wrap: anywhere
+      }
+      .register-status-actions {
+        display: flex;
+        gap: 5px;
+        flex: 0 0 auto
+      }
+      .register-status-panel button {
+        min-height: 27px;
+        padding: 4px 8px;
+        font-size: 11px
+      }
+      .register-status-panel[data-state=warning] #registerStatus {
+        color: #895124
+      }
+      .register-details {
+        margin-top: 5px;
+        padding: 9px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        max-height: 35vh;
+        overflow: auto;
+        color: var(--ink)
+      }
+      .register-details table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+        table-layout: auto
+      }
+      .register-details td,
+      .register-details th {
+        height: auto;
+        padding: 5px 8px;
+        text-align: left;
+        vertical-align: top;
+        white-space: normal;
+        line-height: 1.45;
+        border-bottom: 1px solid var(--line);
+        position: static
+      }
+      .register-details thead th {
+        background: #f2f6f5;
+        color: var(--muted)
+      }
+      .register-details th[scope=row] {
+        font-weight: 650;
+        white-space: nowrap
+      }
+      .register-details small {
+        display: block;
+        margin-top: 3px;
+        font-size: 11px;
+        color: #895124;
+        overflow-wrap: anywhere
+      }
+      .register-details p {
+        margin: 5px 0 0;
+        line-height: 1.45;
+        color: var(--muted)
+      }
+      .register-details .register-update-error {
+        color: #895124
+      }
+      .register-details-footer {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px
+      }
+      .register-details-footer button {
+        flex: 0 0 auto
+      }
+      @media(max-width:760px) {
+        .register-status-main {
+          align-items: flex-start;
+          flex-wrap: wrap
+        }
+        .register-status-actions {
+          margin-left: auto
+        }
+        .register-details-footer {
+          align-items: flex-start;
+          flex-direction: column
+        }
+        .register-details td,
+        .register-details th {
+          padding: 5px 4px
+        }
+      }
+      @media print {
+        .register-status-panel {
+          display: none!important
+        }
+      }
     </style>
     <script id="ssf-viewer-data" type="application/json">
       null
@@ -2201,7 +2312,66 @@
         </div>
       </form>
     </dialog>
-    <div id="registerStatus" class="address-storage-status" role="status" aria-live="polite">Preparing registers; missing data will download in the background…</div>
+    <section id="registerStatusPanel" class="register-status-panel" aria-label="Location registers">
+      <div class="register-status-main">
+        <span id="registerStatus" role="status" aria-live="polite">Registers: loading browser data…</span>
+        <div class="register-status-actions">
+          <button id="updateRegisters" type="button" title="Check the official sources and download new or missing registers">Check updates</button>
+          <button id="registerDetailsToggle" type="button" aria-expanded="false" aria-controls="registerDetails">Details</button>
+        </div>
+      </div>
+      <div id="registerDetails" class="register-details" hidden>
+        <table aria-label="Register sources and update status">
+          <thead>
+            <tr>
+              <th scope="col">Register</th>
+              <th scope="col">Data in use</th>
+              <th scope="col">Update status</th>
+              <th scope="col">Source date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-register="addresses">
+              <th scope="row">Addresses</th>
+              <td id="registerSource-addresses">Not loaded</td>
+              <td>
+                <span id="registerActivity-addresses">Waiting</span>
+                <small id="registerError-addresses" hidden></small>
+              </td>
+              <td id="registerDate-addresses">—</td>
+            </tr>
+            <tr data-register="roads">
+              <th scope="row">Roads</th>
+              <td id="registerSource-roads">Not loaded</td>
+              <td>
+                <span id="registerActivity-roads">Waiting</span>
+                <small id="registerError-roads" hidden></small>
+              </td>
+              <td id="registerDate-roads">—</td>
+            </tr>
+            <tr data-register="rail">
+              <th scope="row">CFL lines</th>
+              <td id="registerSource-rail">Not loaded</td>
+              <td>
+                <span id="registerActivity-rail">Waiting</span>
+                <small id="registerError-rail" hidden></small>
+              </td>
+              <td id="registerDate-rail">—</td>
+            </tr>
+          </tbody>
+        </table>
+        <p id="registerSourceHelp"></p>
+        <p id="registerUpdateError" class="register-update-error" hidden></p>
+        <div class="register-details-footer">
+          <div>
+            <p id="registerLastCheck"></p>
+            <p id="registerStorageInfo"></p>
+            <p>Automatic check: once a week, and retries when data is missing.</p>
+          </div>
+          <button id="forceUpdateRegisters" type="button" title="Download all three registers again, even when their published versions are unchanged">Download all again</button>
+        </div>
+      </div>
+    </section>
     <div id="folderStatus" class="folder-status" role="status" aria-live="polite" hidden>
       <span id="folderStatusText"></span>
     </div>
@@ -2259,7 +2429,6 @@
         </div>
         <div class="data-tools">
           <label><span class="sr-only">Filter photos by filename, address, road, CFL line or PK</span><input id="filterPhotos" type="search" placeholder="Filter name, address, road, CFL, PK…" autocomplete="off"></label>
-          <button id="updateRegisters" type="button" title="Download all three official Luxembourg registers in the background">Update registers</button>
           <button id="exportRegisterHTML" type="button" title="Download the Slim program; all registers will load in the background">Download Slim HTML</button>
         </div>
         <div id="timelineInfo" class="timeline-info" hidden>
@@ -2371,7 +2540,7 @@
     </main>
     <footer class="app-footer">
       <p>Photos stay on your device. While the address register loads, coordinates are sent to Geoportail for address lookup.<br>All three registers download in the background and are saved in this browser when possible. CSV exports contain location data.</p>
-      <p class="footer-status"><span class="status-dot" id="mapStatusDot"></span><span id="serviceStatus">Connecting to map services…</span><br>SnapShotFinder 2.8.8 Slim · Christian Dammé</p>
+      <p class="footer-status"><span class="status-dot" id="mapStatusDot"></span><span id="serviceStatus">Connecting to map services…</span><br>SnapShotFinder 2.8.9 Slim · Christian Dammé</p>
     </footer>
     <div class="drop-overlay" id="dropOverlay" hidden>
       <strong>Drop your photos here</strong>
@@ -2475,7 +2644,7 @@
     <script id="ssf-slim-export">
       (() => {
         "use strict";
-        const e = "2.8.8", t = document.head.querySelector('meta[name="application-version"]')?.content, o = document.head.cloneNode(!1);
+        const e = "2.8.9", t = document.head.querySelector('meta[name="application-version"]')?.content, o = document.head.cloneNode(!1);
         for (const e of document.head.childNodes) {
           const t = 1 === e.nodeType && "ssf-viewer-data" === e.id, n = e.cloneNode(!t);
           t && (n.textContent = "null"), o.appendChild(n);
@@ -2487,7 +2656,7 @@
         const s = document.body.cloneNode(!0);
         for (const e of s.querySelectorAll("script")) e.remove();
         for (const e of s.querySelectorAll(".chip")) "Viewer · addresses, roads & CFL" === e.textContent && (e.textContent = "Slim · addresses, roads & CFL");
-        for (const e of s.querySelector(".footer-status")?.childNodes || []) 3 === e.nodeType && (e.textContent = e.textContent.replace("SnapShotFinder 2.8.8 Viewer ·", "SnapShotFinder 2.8.8 Slim ·"));
+        for (const e of s.querySelector(".footer-status")?.childNodes || []) 3 === e.nodeType && (e.textContent = e.textContent.replace("SnapShotFinder 2.8.9 Viewer ·", "SnapShotFinder 2.8.9 Slim ·"));
         const c = e => e.cloneNode(!1).outerHTML.replace(/<\/[^>]+>$/, ""), i = "<!doctype html>" + c(document.documentElement) + o.outerHTML + c(document.body) + s.innerHTML, a = [ "ssf-slim-export", "ssf-core", "ssf-register-worker-source", "ssf-register-client", "snapshotAppScript", "screenCaptureScript", "tileSplitterScript", "ssf-package-assets", "ssf-viewer-builder", "ssf-zip-core", "ssf-map-snapshots", "ssf-viewer-runtime", "ssf-viewer-export", "ssf-source-capture" ];
         let l, d, p = null;
         const m = new Promise((e, t) => {
@@ -3736,8 +3905,12 @@
             schema: 2
           }
         };
-        const d = new Set, u = e => "addresses" === e ? !!r : "roads" === e ? !!s : !!n;
-        function h() {
+        const d = new Set, u = e => "addresses" === e ? !!r : "roads" === e ? !!s : !!n, h = {}, f = {
+          addresses: "waiting",
+          roads: "waiting",
+          rail: "waiting"
+        }, g = {};
+        function m() {
           return {
             manifest: c.manifest,
             revision: [ "slim", l, ...[ "addresses", "roads", "rail" ].map(e => u(e) ? c.manifest[e]?.key || c.manifest[e]?.date || e : "missing") ].join("|"),
@@ -3746,14 +3919,23 @@
             railReady: !!n,
             railInfo: a,
             railError: o,
+            sources: {
+              ...h
+            },
+            activity: {
+              ...f
+            },
+            errors: {
+              ...g
+            },
             loading: [ ...d ]
           };
         }
-        function f(e = "", t = !1) {
+        function w(e = "", t = !1) {
           self.postMessage({
             type: "status",
             status: {
-              ...h(),
+              ...m(),
               message: e,
               ...t ? {
                 snapshot: c
@@ -3761,7 +3943,7 @@
             }
           });
         }
-        function g(e) {
+        function p(e) {
           if ("string" == typeof e) {
             const t = atob(e.trim());
             return Uint8Array.from(t, e => e.charCodeAt(0));
@@ -3771,28 +3953,28 @@
           if (ArrayBuffer.isView(e)) return new Uint8Array(e.buffer, e.byteOffset, e.byteLength);
           throw new Error("Invalid saved register data.");
         }
-        async function m(e) {
-          const t = new Blob([ g(e) ]).stream().pipeThrough(new DecompressionStream("gzip"));
+        async function y(e) {
+          const t = new Blob([ p(e) ]).stream().pipeThrough(new DecompressionStream("gzip"));
           return JSON.parse(await new Response(t).text());
         }
-        function w(e) {
+        function b(e) {
           const t = String(e || "").slice(0, 10), r = Date.parse(t);
           return /^\d{4}-\d{2}-\d{2}$/.test(t) && Number.isFinite(r) && new Date(r).toISOString().slice(0, 10) === t ? t : null;
         }
-        function p(e, t) {
+        function S(e, t) {
           return Number.isFinite(e) && Number.isFinite(t) && e >= 5.5 && e <= 6.8 && t >= 49.3 && t <= 50.3;
         }
-        async function y(t, i, d, u) {
-          let h, f;
+        async function E(t, i, d, u, m = "download") {
+          let w, y;
           if ("rail" === t) {
             const e = function(e) {
               if (!(1 === e?.version && Array.isArray(e.routes) && Array.isArray(e.anchors) && e.routes.length && e.anchors.length)) throw new Error("Invalid CFL dataset.");
               const t = new Set;
               for (const r of e.routes) {
-                if ("string" != typeof r.id || t.has(r.id) || "string" != typeof r.name || !Array.isArray(r.parts) || !r.parts.length || r.parts.some(e => !Array.isArray(e) || e.length < 2 || e.some(e => !Array.isArray(e) || !p(e[0], e[1])))) throw new Error("Invalid CFL geometry.");
+                if ("string" != typeof r.id || t.has(r.id) || "string" != typeof r.name || !Array.isArray(r.parts) || !r.parts.length || r.parts.some(e => !Array.isArray(e) || e.length < 2 || e.some(e => !Array.isArray(e) || !S(e[0], e[1])))) throw new Error("Invalid CFL geometry.");
                 t.add(r.id);
               }
-              for (const r of e.anchors) if (!t.has(r.route) || !Number.isFinite(r.pk) || !p(r.lon, r.lat)) throw new Error("Invalid CFL kilometre reference.");
+              for (const r of e.anchors) if (!t.has(r.route) || !Number.isFinite(r.pk) || !S(r.lon, r.lat)) throw new Error("Invalid CFL kilometre reference.");
               const r = new RailEngine(e, SSFRailProject, {
                 geographicFallback: !0
               });
@@ -3809,23 +3991,23 @@
                 }
               };
             }(i);
-            h = e.engine, f = e.info, d = {
+            w = e.engine, y = e.info, d = {
               ...d,
-              date: f.date,
-              count: f.routes,
-              anchors: f.anchors
+              date: y.date,
+              count: y.routes,
+              anchors: y.anchors
             };
           } else if (function(t, r, s) {
-            if (1 !== r?.schema || !w(r.date) || r.date !== s?.date || Date.parse(r.date) > Date.now() + e || !Array.isArray(r.rows) || r.rows.length < 1e3 || r.rows.length !== s.count) throw new Error("Incomplete " + t + " register.");
+            if (1 !== r?.schema || !b(r.date) || r.date !== s?.date || Date.parse(r.date) > Date.now() + e || !Array.isArray(r.rows) || r.rows.length < 1e3 || r.rows.length !== s.count) throw new Error("Incomplete " + t + " register.");
             if ("addresses" === t) {
-              for (const e of r.rows) if (!Array.isArray(e) || 8 !== e.length || !p(e[0], e[1]) || e.slice(2).some(e => "string" != typeof e)) throw new Error("Invalid address record.");
-            } else for (const e of r.rows) if (!Array.isArray(e) || 6 !== e.length || e.some((e, t) => 4 !== t && "string" != typeof e) || ![ "0", "1", "2", "3", "4" ].includes(e[3]) || !Array.isArray(e[4]) || e[4].length < 2 || e[4].some(e => !Array.isArray(e) || 2 !== e.length || !p(e[0], e[1]))) throw new Error("Invalid road geometry.");
-          }(t, i, d), h = "addresses" === t ? new SSFSpatial.Engine(i, {
+              for (const e of r.rows) if (!Array.isArray(e) || 8 !== e.length || !S(e[0], e[1]) || e.slice(2).some(e => "string" != typeof e)) throw new Error("Invalid address record.");
+            } else for (const e of r.rows) if (!Array.isArray(e) || 6 !== e.length || e.some((e, t) => 4 !== t && "string" != typeof e) || ![ "0", "1", "2", "3", "4" ].includes(e[3]) || !Array.isArray(e[4]) || e[4].length < 2 || e[4].some(e => !Array.isArray(e) || 2 !== e.length || !S(e[0], e[1]))) throw new Error("Invalid road geometry.");
+          }(t, i, d), w = "addresses" === t ? new SSFSpatial.Engine(i, {
             rows: []
           }) : new SSFSpatial.Engine({
             rows: []
-          }, i), ("addresses" === t ? h.stats.addresses : h.stats.roads) !== i.rows.length) throw new Error("Invalid spatial index.");
-          const m = u ? g(u) : await async function(e) {
+          }, i), ("addresses" === t ? w.stats.addresses : w.stats.roads) !== i.rows.length) throw new Error("Invalid spatial index.");
+          const E = u ? p(u) : await async function(e) {
             const t = new TextEncoder;
             let r;
             if (Array.isArray(e.rows)) {
@@ -3845,10 +4027,10 @@
             } else r = new Blob([ JSON.stringify(e) ]).stream();
             return new Uint8Array(await new Response(r.pipeThrough(new CompressionStream("gzip"))).arrayBuffer());
           }(i);
-          "addresses" === t ? r = h : "roads" === t ? s = h : (n = h, a = f, o = ""), l++, 
-          c = {
+          "addresses" === t ? r = w : "roads" === t ? s = w : (n = w, a = y, o = ""), l++, 
+          h[t] = "cache" === m ? "cache" : "download", f[t] = "ready", delete g[t], c = {
             ...c,
-            [t]: m,
+            [t]: E,
             manifest: {
               ...c.manifest,
               schema: 2,
@@ -3857,15 +4039,15 @@
             }
           };
         }
-        function b(e) {
+        function A(e) {
           const t = new URL(e);
           if ("https:" !== t.protocol || ![ "data.public.lu", "download.data.public.lu" ].includes(t.hostname) || t.username || t.password) throw new Error("Unsupported register download address.");
           return t.href;
         }
-        async function S(e, t = "json") {
+        async function x(e, t = "json") {
           const r = new AbortController, s = setTimeout(() => r.abort(), "json" === t ? 3e4 : 3e5);
           try {
-            const s = await fetch(b(e), {
+            const s = await fetch(A(e), {
               signal: r.signal,
               credentials: "omit",
               cache: "no-cache"
@@ -3876,7 +4058,7 @@
             clearTimeout(s);
           }
         }
-        function E(e, t) {
+        function M(e, t) {
           const r = RailEngine.constants.SEARCH_RADIUS_METRES;
           if (!n) return {
             rail: null,
@@ -3919,36 +4101,36 @@
             };
           }
         }
-        function A(e, t) {
+        function L(e, t) {
           const r = c.manifest[e];
           if (r?.date && t.date && t.date < r.date) throw new Error("Older register publication rejected.");
         }
-        async function x(a) {
+        async function v(a) {
           if (i) return i;
           i = (async () => {
             const i = {};
             let l = !1;
-            for (const e of [ "addresses", "roads", "rail" ]) d.add(e);
-            f("Checking register sources…"), await Promise.all([ "addresses", "roads", "rail" ].map(async r => {
+            for (const e of [ "addresses", "roads", "rail" ]) d.add(e), f[e] = "checking", delete g[e];
+            w("Checking register sources…"), await Promise.all([ "addresses", "roads", "rail" ].map(async r => {
               try {
                 const s = "rail" === r ? await async function(e) {
                   const t = await SSFRailLoader.discover(), r = c.manifest.rail;
                   if (!e && n && r?.key === t.key) return !1;
-                  f("Downloading CFL lines and kilometre references…");
+                  f.rail = "downloading", w("Downloading CFL lines and kilometre references…");
                   const s = await SSFRailLoader.load(t), a = {
                     ...s.metadata,
                     date: s.data.geometryDate || s.data.sourceDate
                   };
-                  if (A("rail", a), n && r?.count && s.data.routes.length < .8 * r.count) throw new Error("Incomplete CFL register rejected.");
-                  return await y("rail", s.data, a), f("CFL lines and kilometre references ready.", !0), 
-                  !0;
+                  if (L("rail", a), n && r?.count && s.data.routes.length < .8 * r.count) throw new Error("Incomplete CFL register rejected.");
+                  return f.rail = "preparing", w("Preparing CFL search…"), await E("rail", s.data, a), 
+                  w("CFL lines and kilometre references ready.", !0), !0;
                 }(a) : await async function(r, s) {
                   const n = await async function(r) {
-                    const s = t[r], n = await S("https://data.public.lu/api/1/datasets/" + s.dataset + "/");
+                    const s = t[r], n = await x("https://data.public.lu/api/1/datasets/" + s.dataset + "/");
                     if (!Array.isArray(n.resources)) throw new Error("Invalid register catalogue.");
-                    const a = n.resources.filter(e => String(e.title || "").toLowerCase() === s.title).sort((e, t) => String(t.last_modified || "").localeCompare(String(e.last_modified || "")))[0], o = w(a?.last_modified);
+                    const a = n.resources.filter(e => String(e.title || "").toLowerCase() === s.title).sort((e, t) => String(t.last_modified || "").localeCompare(String(e.last_modified || "")))[0], o = b(a?.last_modified);
                     if (!a?.url || !o || Date.parse(o) > Date.now() + e) throw new Error("Invalid register publication date.");
-                    const i = b(a.url), l = a.last_modified;
+                    const i = A(a.url), l = a.last_modified;
                     return {
                       date: o,
                       url: i,
@@ -3960,12 +4142,12 @@
                       key: [ a.id || i, l, a.checksum?.value || "" ].join("|")
                     };
                   }(r);
-                  A(r, n);
+                  L(r, n);
                   const a = c.manifest[r];
                   if (!s && u(r) && a?.key === n.key) return !1;
-                  f("Downloading " + ("addresses" === r ? "addresses" : "road axes") + "…");
-                  const o = "addresses" === r ? SSFRegisterParsers.parseAddresses(await S(n.url, "text"), n.date) : await async function(e, t) {
-                    e = b(e);
+                  f[r] = "downloading", w("Downloading " + ("addresses" === r ? "addresses" : "road axes") + "…");
+                  const o = "addresses" === r ? SSFRegisterParsers.parseAddresses(await x(n.url, "text"), n.date) : await async function(e, t) {
+                    e = A(e);
                     const r = new AbortController, s = setTimeout(() => r.abort(), 3e5);
                     try {
                       const n = await fetch(e, {
@@ -3996,7 +4178,7 @@
                         for (const t of Object.keys(l)) l[t] += e.stats[t] || 0;
                         p = [], await new Promise(e => setTimeout(e, 0));
                       }
-                      async function S(e) {
+                      async function b(e) {
                         let t = 0;
                         if ("prefix" === u) {
                           c += e;
@@ -4024,13 +4206,13 @@
                       for (;;) {
                         const x = await a.read();
                         if (x.done) break;
-                        await S(o.decode(x.value, {
+                        await b(o.decode(x.value, {
                           stream: !0
                         }));
                       }
-                      if (await S(o.decode()), await y(), "tail" !== u || f || g) throw new Error("Incomplete road register download.");
-                      const E = JSON.parse(c + "[]" + d), A = E.TRP_VC || E;
-                      if ("FeatureCollection" !== A?.type || !Array.isArray(A.features) || i.length < 1e3 || l.invalidRows > Math.max(10, .01 * l.sourceRows)) throw new Error("Incomplete road register download.");
+                      if (await b(o.decode()), await y(), "tail" !== u || f || g) throw new Error("Incomplete road register download.");
+                      const S = JSON.parse(c + "[]" + d), E = S.TRP_VC || S;
+                      if ("FeatureCollection" !== E?.type || !Array.isArray(E.features) || i.length < 1e3 || l.invalidRows > Math.max(10, .01 * l.sourceRows)) throw new Error("Incomplete road register download.");
                       return {
                         schema: 1,
                         date: t,
@@ -4043,32 +4225,32 @@
                     }
                   }(n.url, n.date);
                   if (u(r) && a?.count && o.rows.length < .8 * a.count) throw new Error("Incomplete " + r + " register rejected.");
-                  return f("Preparing " + ("addresses" === r ? "address" : "road") + " search…"), 
-                  await y(r, o, {
+                  return f[r] = "preparing", w("Preparing " + ("addresses" === r ? "address" : "road") + " search…"), 
+                  await E(r, o, {
                     ...n,
                     count: o.rows.length
-                  }), f(("addresses" === r ? "Addresses" : "Roads") + " ready.", !0), !0;
+                  }), w(("addresses" === r ? "Addresses" : "Roads") + " ready.", !0), !0;
                 }(r, a);
-                l = l || s;
+                l = l || s, f[r] = u(r) ? "ready" : "waiting";
               } catch (e) {
                 i[r] = "AbortError" === e?.name ? "Download timed out." : e.message || "Download unavailable.", 
-                "rail" !== r || n || (o = i[r]);
+                "rail" !== r || n || (o = i[r]), g[r] = i[r], f[r] = "failed";
               } finally {
-                d.delete(r), f("", !1);
+                d.delete(r), w("", !1);
               }
             }));
-            const g = !Object.keys(i).length && null !== r && null !== s && null !== n;
-            return g && (c = {
+            const h = !Object.keys(i).length && null !== r && null !== s && null !== n;
+            return h && (c = {
               ...c,
               manifest: {
                 ...c.manifest,
                 checkedAt: (new Date).toISOString()
               }
             }), {
-              ...h(),
+              ...m(),
               snapshot: c,
               updated: l,
-              complete: g,
+              complete: h,
               errors: i
             };
           })();
@@ -4085,29 +4267,29 @@
             if ("init" === a) e = await async function(e = {}) {
               const t = {};
               for (const r of [ "addresses", "roads", "rail" ]) if (e?.[r]) try {
-                const t = await m(e[r]), s = {
+                const t = await y(e[r]), s = {
                   ...e.manifest?.[r] || {},
                   date: e.manifest?.[r]?.date || t.date || t.geometryDate || t.sourceDate
                 };
-                "rail" !== r && (s.count = s.count ?? t.rows?.length), await y(r, t, s, e[r]);
+                "rail" !== r && (s.count = s.count ?? t.rows?.length), await E(r, t, s, e[r], "download" === e.sourceOrigins?.[r] ? "download" : "cache");
               } catch (e) {
-                t[r] = e.message || "Saved register could not be read.";
+                t[r] = e.message || "Saved register could not be read.", g[r] = t[r], f[r] = "failed";
               }
               return r && s && n && e?.manifest?.checkedAt && (c.manifest.checkedAt = e.manifest.checkedAt), 
               {
-                ...h(),
+                ...m(),
                 snapshot: c,
                 errors: t
               };
             }(o || {}); else if ("lookup" === a) e = function(e, t) {
               if (!Number.isFinite(e) || !Number.isFinite(t) || Math.abs(e) > 90 || Math.abs(t) > 180) throw new Error("Invalid GPS coordinates.");
               return {
-                ...h(),
+                ...m(),
                 address: r?.nearestAddress(t, e) || null,
                 road: s?.nearestRoad(t, e) || null,
-                ...E(t, e)
+                ...M(t, e)
               };
-            }(o?.latitude, o?.longitude); else if ("refresh" === a) e = await x(!!o?.force); else {
+            }(o?.latitude, o?.longitude); else if ("refresh" === a) e = await v(!!o?.force); else {
               if ("snapshot" !== a) throw new Error("Unknown register operation.");
               e = c;
             }
@@ -4147,22 +4329,41 @@
           cacheLoaded: !1,
           storageAvailable: !1,
           sessionOnly: !1,
+          online: !1 !== navigator.onLine,
+          updateFailed: !1,
+          updateResult: null,
+          updateError: "",
+          sources: {},
+          activity: {
+            addresses: "waiting",
+            roads: "waiting",
+            rail: "waiting"
+          },
           loading: [],
           errors: {},
           message: "Preparing register storage…"
         };
-        let c = null, u = null, m = 0, p = 0, f = null, h = null, g = Promise.resolve(), y = 0, v = 0, w = 0, b = null, R = !1, k = null, S = 0, E = 0;
-        const D = e => new Promise(r => setTimeout(r, e)), T = () => !1 !== navigator.onLine, M = () => ({
+        let c = null, u = null, p = 0, f = 0, m = null, g = null, y = Promise.resolve(), h = 0, v = 0, w = 0, b = null, R = !1, k = null, E = 0, S = 0, D = {};
+        const T = e => new Promise(r => setTimeout(r, e)), O = () => !1 !== navigator.onLine, j = () => ({
           ...d,
+          online: O(),
+          sources: {
+            ...d.sources
+          },
+          activity: {
+            ...d.activity
+          },
           loading: [ ...d.loading ],
           errors: {
             ...d.errors
           }
         });
-        function j(e) {
-          Object.assign(d, e);
-          for (const e of t) try {
-            e(M());
+        function M(e) {
+          Object.assign(d, {
+            online: O()
+          }, e);
+          for (const r of t) try {
+            r(j());
           } catch (e) {}
         }
         function A() {
@@ -4175,20 +4376,24 @@
           const r = function(e) {
             const r = e.manifest, t = {};
             for (const r of [ "revision", "addressReady", "roadReady", "railReady", "railInfo", "railError", "loading" ]) void 0 !== e[r] && (t[r] = e[r]);
+            for (const r of [ "sources", "activity" ]) e[r] && "object" == typeof e[r] && (t[r] = {
+              ...e[r]
+            });
             return e.errors && "object" == typeof e.errors && (t.errors = e.errors), r && (t.addressesDate = r.addresses?.date || null, 
             t.roadsDate = r.roads?.date || null, t.addressCount = r.addresses?.count || 0, t.roadCount = r.roads?.count || 0, 
             t.syncedAt = r.syncedAt || r.builtAt || d.syncedAt), e.message && (t.message = e.message), 
-            e.phase && h && (t.phase = "updating"), t;
+            e.phase && g && (t.phase = "updating"), t;
           }(e), t = r.revision && r.revision !== d.revision;
-          t && n.clear(), e.snapshot && (f = e.snapshot), !d.addressReady && r.addressReady && k?.abort(), 
-          j({
+          t && n.clear(), e.snapshot && (m = e.snapshot, D = {
+            ...r.sources || d.sources
+          }), !d.addressReady && r.addressReady && k?.abort(), M({
             ...r,
             ...t ? {
               saved: !1
             } : {}
           });
         }
-        function O(e) {
+        function L(e) {
           return c ? new Promise(r => {
             let t = !1;
             const s = e => {
@@ -4202,7 +4407,7 @@
             }
           }) : Promise.resolve(null);
         }
-        function L(e, r) {
+        function F(e, r) {
           return c ? new Promise(t => {
             let s, a = !1;
             const n = e => {
@@ -4227,20 +4432,20 @@
             }
           }) : Promise.resolve(!1);
         }
-        function C(e, r = y) {
+        function C(e, r = h) {
           if (!e) return Promise.resolve(!1);
-          const t = g.then(() => L(e, r), () => L(e, r));
-          return g = t.catch(() => !1), t.then(r => {
-            e === f && j({
+          const t = y.then(() => F(e, r), () => F(e, r));
+          return y = t.catch(() => !1), t.then(r => {
+            e === m && M({
               saved: r,
               persistent: r,
               sessionOnly: !r && P()
             });
           }), t;
         }
-        function F(e, r = {}) {
+        function N(e, r = {}) {
           return u ? new Promise((t, a) => {
-            const n = ++p, o = setTimeout(() => {
+            const n = ++f, o = setTimeout(() => {
               s.delete(n), a(new Error("The register operation took too long."));
             }, "refresh" === e ? 6e5 : "init" === e ? 3e4 : 2e4);
             s.set(n, {
@@ -4259,28 +4464,39 @@
             }
           }) : Promise.reject(new Error("Register worker unavailable."));
         }
-        function N(e) {
-          m++;
+        function I(e) {
+          p++;
           try {
             u?.terminate();
           } catch (e) {}
           u = null;
           for (const r of s.values()) clearTimeout(r.timer), r.reject(e);
-          s.clear(), n.clear(), j({
+          s.clear(), n.clear(), M({
             phase: "offline",
             addressReady: !1,
             roadReady: !1,
             railReady: !1,
-            revision: "worker-unavailable-" + m,
+            revision: "worker-unavailable-" + p,
+            sources: {},
+            activity: {
+              addresses: "failed",
+              roads: "failed",
+              rail: "failed"
+            },
+            errors: Object.fromEntries([ "addresses", "roads", "rail" ].map(r => [ r, e.message || "Register worker unavailable." ])),
+            online: O(),
+            updateFailed: !!g,
+            updateResult: g ? "failed" : d.updateResult,
+            updateError: e.message || "Register worker unavailable.",
             loading: [],
             railError: "CFL search is unavailable in this browser.",
             message: "Local register processing unavailable; online addresses remain available."
           });
         }
-        function I() {
+        function U() {
           const e = document.getElementById("ssf-register-worker-source")?.textContent.trim() || "";
           if (!e) throw new Error("Register worker source is missing.");
-          const r = ++m, t = URL.createObjectURL(new Blob([ e ], {
+          const r = ++p, t = URL.createObjectURL(new Blob([ e ], {
             type: "text/javascript"
           }));
           try {
@@ -4289,16 +4505,16 @@
             URL.revokeObjectURL(t);
           }
           u.onmessage = e => {
-            if (r !== m) return;
+            if (r !== p) return;
             const t = e.data || {};
             if ("status" === t.type && t.status) return x(t.status), void (t.status.snapshot && C(t.status.snapshot));
             const a = s.get(t.id);
             a && (clearTimeout(a.timer), s.delete(t.id), t.error ? a.reject(new Error(t.error)) : a.resolve(t.result));
           }, u.onerror = e => {
-            r === m && (e.preventDefault?.(), N(new Error(e.message || "Register worker unavailable.")));
+            r === p && (e.preventDefault?.(), I(new Error(e.message || "Register worker unavailable.")));
           };
         }
-        const U = (async () => {
+        const B = (async () => {
           c = await new Promise(e => {
             let r = !1;
             const t = t => {
@@ -4312,14 +4528,14 @@
               }, e.onsuccess = () => {
                 const r = e.result;
                 r.onversionchange = () => {
-                  r.close(), c === r && (c = null, j({
+                  r.close(), c === r && (c = null, M({
                     storageAvailable: !1,
                     persistent: !1,
                     saved: !1,
                     sessionOnly: P()
                   }));
                 }, r.onclose = () => {
-                  c === r && (c = null, j({
+                  c === r && (c = null, M({
                     storageAvailable: !1,
                     persistent: !1,
                     saved: !1,
@@ -4330,11 +4546,11 @@
             } catch (e) {
               t(null);
             }
-          }), j({
+          }), M({
             storageAvailable: !!c,
             persistent: !!c && null
           });
-          const [r, t, s] = await Promise.all([ O("slim-active"), O("active"), O("slim-meta") ]), a = function(e, r) {
+          const [r, t, s] = await Promise.all([ L("slim-active"), L("active"), L("slim-meta") ]), a = function(e, r) {
             if (!e) return r || {};
             if (!r) return e;
             const t = {
@@ -4349,27 +4565,28 @@
             r.manifest?.[s] && (t.manifest[s] = r.manifest[s]));
             return t;
           }(r, t);
-          f = a, y = function(r) {
+          m = a, h = function(r) {
             const t = "number" == typeof r ? r : Date.parse(r || "");
             return Number.isFinite(t) && t > 0 && t <= Date.now() + e ? t : 0;
           }(s?.lastSuccessfulCheck || r?.manifest?.checkedAt);
           try {
-            I(), x(await F("init", a));
+            U(), x(await N("init", a));
             const e = P();
-            j({
-              phase: A() ? "ready" : "waiting",
+            M({
+              phase: A() ? "ready" : O() ? "waiting" : "offline",
               cacheLoaded: e,
               saved: e && !!c,
               persistent: e ? !!c : d.persistent,
-              checkedAt: y ? new Date(y).toISOString() : null,
-              message: A() ? "Saved registers ready." : "Missing registers will download in the background."
-            }), A() || (y = 0);
+              checkedAt: h ? new Date(h).toISOString() : null,
+              online: O(),
+              message: O() ? A() ? "Saved registers ready." : "Missing registers will download in the background." : e ? "Offline; using available register data." : "Offline; no saved registers are available."
+            }), A() || (h = 0);
           } catch (e) {
-            N(e);
+            I(e);
           }
-          return H(250), M();
+          return W(250), j();
         })();
-        function B() {
+        function G() {
           return {
             address: null,
             road: null,
@@ -4383,12 +4600,12 @@
             railReady: !1
           };
         }
-        const G = e => "string" == typeof e || "number" == typeof e ? String(e) : "";
-        function _(e) {
+        const _ = e => "string" == typeof e || "number" == typeof e ? String(e) : "";
+        function z(e) {
           if (!e || !Array.isArray(e.results)) throw new Error("Unexpected Geoportail response.");
           const r = e.results[0];
           if (!r) return null;
-          const t = G(r.number ?? r.postnumber), s = G(r.street), a = G(r.postal_code ?? r.zip), n = G(r.locality ?? r.Locality), o = [ [ t, s ].filter(Boolean).join(", "), [ a, n ].filter(Boolean).join(" ") ].filter(Boolean).join(" · ") || G(r.address) || G(r.name);
+          const t = _(r.number ?? r.postnumber), s = _(r.street), a = _(r.postal_code ?? r.zip), n = _(r.locality ?? r.Locality), o = [ [ t, s ].filter(Boolean).join(", "), [ a, n ].filter(Boolean).join(" ") ].filter(Boolean).join(" · ") || _(r.address) || _(r.name);
           if (!o) throw new Error("Geoportail returned an incomplete address.");
           const i = r.geomlonlat?.coordinates || [], l = Number(r.distance);
           return {
@@ -4398,15 +4615,15 @@
             postcode: a,
             postalCode: a,
             locality: n,
-            country: G(r.country) || "Luxembourg",
-            commune: G(r.commune),
-            id: G(r.id_caclr_building ?? r.id_caclr_bat),
+            country: _(r.country) || "Luxembourg",
+            commune: _(r.commune),
+            id: _(r.id_caclr_building ?? r.id_caclr_bat),
             distance: null != r.distance && Number.isFinite(l) ? l : null,
             lon: Number.isFinite(i[0]) ? i[0] : null,
             lat: Number.isFinite(i[1]) ? i[1] : null
           };
         }
-        function z(e, r) {
+        function H(e, r) {
           const t = e + "|" + r;
           if (o.has(t)) return Promise.resolve(o.get(t));
           if (i.has(t)) return i.get(t);
@@ -4432,20 +4649,20 @@
                       });
                       continue;
                     }
-                    if (!T() || Date.now() < E) {
+                    if (!O() || Date.now() < S) {
                       e.resolve({
                         address: null,
                         error: "Online address search is temporarily unavailable."
                       });
                       continue;
                     }
-                    if (await D(Math.max(0, 250 - (Date.now() - S))), d.addressReady) {
+                    if (await T(Math.max(0, 250 - (Date.now() - E))), d.addressReady) {
                       e.resolve({
                         skipped: !0
                       });
                       continue;
                     }
-                    if (!T()) {
+                    if (!O()) {
                       e.resolve({
                         address: null,
                         error: "No Internet connection."
@@ -4454,7 +4671,7 @@
                     }
                     k = new AbortController;
                     const r = setTimeout(() => k?.abort(), 12e3);
-                    S = Date.now();
+                    E = Date.now();
                     try {
                       const r = "https://apiv4.geoportail.lu/geocode/reverse?lon=" + encodeURIComponent(e.longitude) + "&lat=" + encodeURIComponent(e.latitude), t = await fetch(r, {
                         signal: k.signal,
@@ -4463,11 +4680,11 @@
                       });
                       if (!t.ok) {
                         const e = Number(t.headers.get("Retry-After"));
-                        throw E = Date.now() + (429 === t.status ? Math.min(3e5, Math.max(3e4, 1e3 * e || 0)) : 15e3), 
+                        throw S = Date.now() + (429 === t.status ? Math.min(3e5, Math.max(3e4, 1e3 * e || 0)) : 15e3), 
                         new Error("Geoportail is temporarily unavailable.");
                       }
-                      const s = _(await t.json());
-                      E = 0, o.size >= 5e3 && o.delete(o.keys().next().value), o.set(e.key, {
+                      const s = z(await t.json());
+                      S = 0, o.size >= 5e3 && o.delete(o.keys().next().value), o.set(e.key, {
                         address: s
                       }), e.resolve({
                         address: s
@@ -4475,7 +4692,7 @@
                     } catch (r) {
                       d.addressReady ? e.resolve({
                         skipped: !0
-                      }) : (E = Math.max(E, Date.now() + 15e3), e.resolve({
+                      }) : (S = Math.max(S, Date.now() + 15e3), e.resolve({
                         address: null,
                         error: "AbortError" === r.name ? "Geoportail did not respond in time." : "Online address search is temporarily unavailable."
                       }));
@@ -4497,86 +4714,112 @@
             }
           }(), a;
         }
-        function H(e) {
-          if (clearTimeout(b), !T()) return void (b = null);
-          const t = A() && y ? y + r : Date.now(), s = void 0 !== e ? e : Math.max(250, t - Date.now(), w - Date.now());
+        function W(e) {
+          if (clearTimeout(b), !O()) return void (b = null);
+          const t = A() && h ? h + r : Date.now(), s = void 0 !== e ? e : Math.max(250, t - Date.now(), w - Date.now());
           b = setTimeout(() => {
-            b = null, T() && (A() && y && Date.now() < y + r || Date.now() < w ? H() : q(!1));
+            b = null, O() && (A() && h && Date.now() < h + r || Date.now() < w ? W() : J(!1));
           }, Math.min(Math.max(s, 0), r));
         }
-        function W(e, r) {
-          v++, w = Date.now() + Math.min(18e5, 6e4 * 2 ** Math.min(v - 1, 5)), j({
+        function q(e, r, t = "", s = !0) {
+          v++, w = Date.now() + Math.min(18e5, 6e4 * 2 ** Math.min(v - 1, 5)), M({
             phase: "offline",
             loading: [],
             errors: r || d.errors,
+            activity: Object.fromEntries([ "addresses", "roads", "rail" ].map(e => [ e, [ "checking", "downloading", "preparing" ].includes(d.activity[e]) ? s ? "failed" : "waiting" : d.activity[e] ])),
+            online: O(),
+            updateFailed: s,
+            updateResult: s ? "failed" : d.updateResult,
+            updateError: t,
             message: e || (P() ? "Using available registers; missing updates will be retried later." : "Registers could not be downloaded. Online address search remains available.")
           });
         }
-        async function q(e = !0) {
-          return await U, h || (clearTimeout(b), T() ? (h = Promise.resolve().then(async () => {
-            e && (w = 0, E = 0, o.clear(), n.clear()), j({
+        async function J(e = !0) {
+          return await B, g || (clearTimeout(b), O() ? (g = Promise.resolve().then(async () => {
+            e && (w = 0, S = 0, o.clear(), n.clear()), M({
               phase: "updating",
               loading: [],
               errors: {},
+              activity: {
+                addresses: "checking",
+                roads: "checking",
+                rail: "checking"
+              },
+              online: O(),
+              updateFailed: !1,
+              updateResult: null,
+              updateError: "",
               lookupEpoch: d.lookupEpoch + 1,
               message: "Downloading or checking registers in the background…"
             });
             try {
-              u || (I(), x(await F("init", f || {})));
-              const r = await F("refresh", {
+              u || (U(), x(await N("init", {
+                ...m || {},
+                sourceOrigins: {
+                  ...D
+                }
+              })));
+              const r = await N("refresh", {
                 force: !!e
               });
-              x(r), r.snapshot && (f = r.snapshot);
+              x(r), r.snapshot && (m = r.snapshot);
               const t = !0 === r.complete && A();
-              t && (y = Date.now(), v = 0, w = 0, j({
-                checkedAt: new Date(y).toISOString()
+              t && (h = Date.now(), v = 0, w = 0, M({
+                checkedAt: new Date(h).toISOString()
               }));
-              const s = await C(f, y);
-              return t ? j({
+              const s = await C(m, h);
+              return t ? M({
                 phase: "ready",
                 loading: [],
                 saved: s,
                 persistent: s,
                 sessionOnly: !s,
+                updateFailed: !1,
+                updateResult: r.updated ? "updated" : "current",
+                updateError: "",
                 message: r.updated ? "Registers downloaded; local searches are ready." : "Registers are up to date."
-              }) : W("Some registers are unavailable; available data remains usable.", r.errors), 
+              }) : q("Some registers are unavailable; available data remains usable.", r.errors), 
               t;
             } catch (e) {
-              return W(), !1;
+              return q(void 0, void 0, e.message || "Register update failed."), !1;
             } finally {
-              h = null, H();
+              g = null, W();
             }
-          }), h) : (W("Offline; using available register data."), !1));
+          }), g) : (q("Offline; using available register data.", void 0, "", !1), !1));
         }
         window.addEventListener("online", () => {
-          w = 0, E = 0, n.clear(), o.clear(), j({
+          w = 0, S = 0, n.clear(), o.clear(), M({
+            online: !0,
             lookupEpoch: d.lookupEpoch + 1
-          }), H(250);
+          }), W(250);
         }), window.addEventListener("offline", () => {
-          clearTimeout(b), b = null, k?.abort(), h || j({
+          clearTimeout(b), b = null, k?.abort(), M(g ? {
+            online: !1
+          } : {
+            online: !1,
             phase: A() ? "ready" : "offline",
             message: "Offline; using available register data."
           });
         }), document.addEventListener("visibilitychange", () => {
-          document.hidden || h || H();
+          document.hidden || g || W();
         }), globalThis.SSFRegisters = {
-          ready: U,
+          ready: B,
           lookup: async function(e, r) {
-            if (await U, !Number.isFinite(e) || !Number.isFinite(r) || Math.abs(e) > 90 || Math.abs(r) > 180) throw new Error("Invalid GPS coordinates.");
+            if (await B, !Number.isFinite(e) || !Number.isFinite(r) || Math.abs(e) > 90 || Math.abs(r) > 180) throw new Error("Invalid GPS coordinates.");
             const t = d.revision + "|" + e + "|" + r;
             if (n.has(t)) return n.get(t);
             if (a.has(t)) return a.get(t);
             const s = async function(e, r) {
               for (let t = 0; t < 5; t++) {
                 const t = d.revision;
-                let s = B();
+                let s = G();
                 if (u) try {
-                  s = await F("lookup", {
+                  s = await N("lookup", {
                     latitude: e,
                     longitude: r
                   });
                 } catch (e) {
-                  s = B();
+                  s = G();
                 }
                 if (d.revision !== t || s.revision !== d.revision) continue;
                 if (s.addressReady) return {
@@ -4585,7 +4828,7 @@
                   addressStatus: s.address ? "ready" : "none",
                   addressError: ""
                 };
-                const a = await z(e, r);
+                const a = await H(e, r);
                 if (!a.skipped && d.revision === t && !d.addressReady) return {
                   ...s,
                   address: a.address || null,
@@ -4595,10 +4838,10 @@
                   localReady: !1
                 };
               }
-              const t = u ? await F("lookup", {
+              const t = u ? await N("lookup", {
                 latitude: e,
                 longitude: r
-              }).catch(B) : B();
+              }).catch(G) : G();
               return {
                 ...t,
                 addressSource: t.addressReady ? "local-registers" : "none",
@@ -4609,19 +4852,19 @@
             n.set(t.revision + "|" + e + "|" + r, t)), t)).finally(() => a.delete(t));
             return a.set(t, s), s;
           },
-          refresh: q,
+          refresh: J,
           snapshot: async function() {
-            if (await U, u) try {
-              return await F("snapshot");
+            if (await B, u) try {
+              return await N("snapshot");
             } catch (e) {}
-            return f || {};
+            return m || {};
           },
           exportHTML: function() {
             return "function" != typeof globalThis.SSFSlimExport ? Promise.reject(new Error("HTML export unavailable.")) : Promise.resolve(globalThis.SSFSlimExport());
           },
-          subscribe: e => (t.add(e), e(M()), () => t.delete(e)),
+          subscribe: e => (t.add(e), e(j()), () => t.delete(e)),
           get state() {
-            return M();
+            return j();
           }
         };
       })();
@@ -4657,9 +4900,9 @@
         }, s = [ 3, 4 ], l = [ 6.13, 49.81 ], d = new Intl.Collator(void 0, {
           numeric: !0,
           sensitivity: "base"
-        }), c = window.matchMedia("(prefers-reduced-motion: reduce)").matches, u = e => new Promise(t => setTimeout(t, e)), f = (e, t = 5) => Number.isFinite(e) ? e.toFixed(t) : "—", h = e => Number.isFinite(e.heading) ? `${e.heading.toFixed(1)}°${e.headingRef ? " " + e.headingRef : ""}` : "—", p = () => i.photos.find(e => e.id === i.selected), m = (e = "ssf:change", t) => window.dispatchEvent(new CustomEvent(e, {
+        }), c = window.matchMedia("(prefers-reduced-motion: reduce)").matches, u = e => new Promise(t => setTimeout(t, e)), f = (e, t = 5) => Number.isFinite(e) ? e.toFixed(t) : "—", h = e => Number.isFinite(e.heading) ? `${e.heading.toFixed(1)}°${e.headingRef ? " " + e.headingRef : ""}` : "—", p = () => i.photos.find(e => e.id === i.selected), g = (e = "ssf:change", t) => window.dispatchEvent(new CustomEvent(e, {
           detail: t
-        })), g = () => {
+        })), m = () => {
           const e = i.filter.toLocaleLowerCase();
           return e ? i.photos.filter(t => `${t.file.name} ${t.file.webkitRelativePath || ""} ${t.address?.formatted || ""} ${t.road?.name || ""} ${t.road?.number || ""} ${t.road?.formatted || ""} ${C(t).map(e => `${e.lineId} ${e.name} ${x(e.pk)}`).join(" ")}`.toLocaleLowerCase().includes(e)) : i.photos;
         }, w = e => e.hasGPS && Math.abs(e.latitude) <= 85.05112878;
@@ -4672,18 +4915,18 @@
         function b(t) {
           e("dataStatus").textContent = t;
         }
-        function S() {
+        function k() {
           i.renderPending || (i.renderPending = !0, requestAnimationFrame(() => {
-            i.renderPending = !1, A(), k();
+            i.renderPending = !1, A(), S();
           }));
         }
-        function k() {
+        function S() {
           const t = i.photos.filter(e => e.hasGPS).length, n = i.photos.filter(e => "reading" !== e.status && !e.hasGPS).length;
           e("countPhotos").textContent = `${i.photos.length} photo${1 === i.photos.length ? "" : "s"}`, 
           e("countGPS").textContent = `${t} with GPS`, e("countMissing").textContent = `${n} without GPS`, 
           e("fitAll").disabled = !i.photos.some(w) || ![ ...i.maps.values() ].some(e => e.ready), 
           e("exportCSV").disabled = !i.photos.length || i.busy, e("clearAll").disabled = !i.photos.length, 
-          de(), m();
+          de(), g();
         }
         function L(e, t, n = "") {
           const o = document.createElement("td");
@@ -4703,13 +4946,13 @@
           t;
         }
         function P(e) {
-          return e.packageResults && !e.hasGPS ? "No valid GPS" : e.packageResults ? e.address || e.road || e.rails?.length ? "Location data saved with this package" : e.addressReady ? "No address match (saved)" : "Location data not saved; connect to load registers" : "geoportail" === e.addressSource && e.address ? "Geoportail address · local register downloading" : {
+          return e.packageResults && !e.hasGPS ? "No valid GPS" : e.packageResults ? e.address || e.road || e.rails?.length ? "Location data saved with this package" : e.addressReady ? "No address match (saved)" : "Location data not saved; connect to load registers" : "geoportail" === e.addressSource && e.address ? "Geoportail online address" : {
             idle: "Waiting for location data",
             queued: "Waiting…",
             loading: "Searching…",
             ready: "Local address register",
             partial: "Available register data",
-            pending: "Registers downloading; address not yet available",
+            pending: "Address not available yet",
             none: "No address match",
             error: "Address search unavailable",
             unavailable: "No valid GPS"
@@ -4726,7 +4969,7 @@
         function R(e) {
           return e ? `${e.lineId} · ${e.name}${e.historicalId ? " (old ID)" : ""}` : "—";
         }
-        function M(e) {
+        function F(e) {
           if (!e) return "";
           const t = [ `CFL geometry / kilometre references: ${e.sourceDate} (historical dataset).`, "Shown because the unrounded distance to this route is at most 250 m." ];
           return t.push("orthogonal" === e.projectionKind ? "Perpendicular projection onto the digitised line axis." : "Closest digitised vertex or endpoint; no perpendicular projection inside a segment."), 
@@ -4734,7 +4977,7 @@
           e.historicalId && t.push("This line ID is the historical source designation; no current L-number is asserted."), 
           t.join(" ");
         }
-        function F(e) {
+        function M(e) {
           return e ? Number.isFinite(e.pk) ? ("reference" === e.status ? "Official source reference point." : "PK interpolated along the digitised route between official references.") + " Metre formatting is not a guarantee of metre accuracy." : {
             "no-reference": "No bracketing kilometre references.",
             "reference-gap": "Gap between references is too large.",
@@ -4758,13 +5001,13 @@
           }
           for (const e of n) {
             const t = R(e);
-            i(o, t, t + " · " + M(e), e.routeId), i(a, `${Math.round(e.distance)} m`, t + " · " + M(e), e.routeId), 
-            i(r, x(e.pk), t + " · " + F(e), e.routeId);
+            i(o, t, t + " · " + F(e), e.routeId), i(a, `${Math.round(e.distance)} m`, t + " · " + F(e), e.routeId), 
+            i(r, x(e.pk), t + " · " + M(e), e.routeId);
           }
         }
         function A() {
-          const n = g();
-          Oe(n);
+          const n = m();
+          ze(n);
           const o = "timeline" === i.tab ? t.buildTimelineRows(n) : [], a = "gps" === i.tab ? [ "No.", "File name", "Status", "Latitude", "Longitude", "X LUREF (m)", "Y LUREF (m)", "Direction", "Camera date/time" ] : "address" === i.tab ? [ "No.", "File name", "Nearest known address", "To address", "Nearest road", "To road axis", "CFL lines ≤ 250 m", "To CFL axis", "PK CFL" ] : [ "No", "FileName", "NearestAddress", "Timestamp", "Time difference", "Cumulative time", "Distance", "Cumulative distance" ];
           e("dataTable").classList.toggle("is-timeline", "timeline" === i.tab), e("dataTable").classList.toggle("is-address", "address" === i.tab);
           const r = document.createElement("tr");
@@ -4833,23 +5076,23 @@
             fitWidth: 0,
             fitHeight: 0
           };
-          let c = null, u = null, f = null, h = null, p = !1, m = 0, g = 0, w = !1;
+          let c = null, u = null, f = null, h = null, p = !1, g = 0, m = 0, w = !1;
           const y = (e, t, n) => Math.max(t, Math.min(n, e)), v = e => e instanceof Element && !!e.closest(".photo-zoom-tools");
           function b() {
             const e = Math.max(0, (d.fitWidth * d.scale - d.width) / 2), t = Math.max(0, (d.fitHeight * d.scale - d.height) / 2);
             d.x = y(d.x, -e, e), d.y = y(d.y, -t, t), d.scale <= 1.0001 && (d.scale = 1, d.x = 0, 
             d.y = 0);
           }
-          function S() {
-            g && cancelAnimationFrame(g), g = 0, n.style.transform = `translate(${d.x}px, ${d.y}px) scale(${d.scale})`;
+          function k() {
+            m && cancelAnimationFrame(m), m = 0, n.style.transform = `translate(${d.x}px, ${d.y}px) scale(${d.scale})`;
             const e = d.ready && d.scale > 1.0001;
             t.classList.toggle("is-photo-ready", d.ready), t.classList.toggle("is-photo-zoomed", e), 
             t.classList.toggle("is-photo-dragging", e && !!(c || p && u)), t.tabIndex = d.ready ? 0 : -1, 
             o.hidden = !d.ready, r.disabled = !d.ready || d.scale >= 7.9999, i.disabled = !e, 
             s.disabled = !d.ready, a.textContent = Math.round(100 * d.scale) + "%", a.setAttribute("aria-label", `Photo zoom ${Math.round(100 * d.scale)} percent of fitted size`);
           }
-          function k() {
-            g || (g = requestAnimationFrame(S));
+          function S() {
+            m || (m = requestAnimationFrame(k));
           }
           function L() {
             const e = c?.id;
@@ -4857,7 +5100,7 @@
             t.classList.remove("is-photo-dragging");
           }
           function E() {
-            L(), d.scale = 1, d.x = 0, d.y = 0, S();
+            L(), d.scale = 1, d.x = 0, d.y = 0, k();
           }
           function P() {
             if (w || !d.ready || !n.naturalWidth || !n.naturalHeight) return;
@@ -4870,7 +5113,7 @@
               height: o,
               fitWidth: r,
               fitHeight: i
-            }), b(), k();
+            }), b(), S();
           }
           function x(e, n) {
             const o = t.getBoundingClientRect();
@@ -4885,7 +5128,7 @@
           }, n = t) {
             if (!d.ready || w || !Number.isFinite(e)) return;
             const o = y(e, 1, 8), a = o / d.scale;
-            d.x = n.x - (t.x - d.x) * a, d.y = n.y - (t.y - d.y) * a, d.scale = o, b(), k();
+            d.x = n.x - (t.x - d.x) * a, d.y = n.y - (t.y - d.y) * a, d.scale = o, b(), S();
           }
           function R(e) {
             d.scale > 1.0001 ? E() : C(2, e);
@@ -4900,7 +5143,7 @@
           }, {
             passive: !1
           }), t.addEventListener("dblclick", e => {
-            !d.ready || v(e.target) || performance.now() - m < 650 || (e.preventDefault(), R(x(e.clientX, e.clientY)));
+            !d.ready || v(e.target) || performance.now() - g < 650 || (e.preventDefault(), R(x(e.clientX, e.clientY)));
           }), n.addEventListener("dragstart", e => e.preventDefault()), t.addEventListener("pointerdown", e => {
             "touch" !== e.pointerType && 0 === e.button && d.ready && !v(e.target) && (t.focus({
               preventScroll: !0
@@ -4908,18 +5151,18 @@
               id: e.pointerId,
               x: e.clientX,
               y: e.clientY
-            }, t.setPointerCapture(e.pointerId), k()));
+            }, t.setPointerCapture(e.pointerId), S()));
           }), t.addEventListener("pointermove", e => {
             if (c && c.id === e.pointerId) {
-              if (!(1 & e.buttons)) return L(), void k();
+              if (!(1 & e.buttons)) return L(), void S();
               d.x += e.clientX - c.x, d.y += e.clientY - c.y, c.x = e.clientX, c.y = e.clientY, 
-              b(), k();
+              b(), S();
             }
           });
           for (const e of [ "pointerup", "pointercancel", "lostpointercapture" ]) t.addEventListener(e, e => {
-            c?.id === e.pointerId && (L(), k());
+            c?.id === e.pointerId && (L(), S());
           });
-          function M(e) {
+          function F(e) {
             const n = Array.from(e.touches).filter(e => t.contains(e.target) && !v(e.target));
             if (!n.length) return null;
             const o = n[0], a = n[1], r = x(a ? (o.clientX + a.clientX) / 2 : o.clientX, a ? (o.clientY + a.clientY) / 2 : o.clientY);
@@ -4930,40 +5173,40 @@
               distance: a ? Math.hypot(a.clientX - o.clientX, a.clientY - o.clientY) : 0
             };
           }
-          function F(e) {
+          function M(e) {
             if (!u) return;
-            const t = M(e), n = performance.now();
+            const t = F(e), n = performance.now();
             if (p && e.cancelable && e.preventDefault(), "touchcancel" === e.type) return L(), 
-            void k();
+            void S();
             !t && f && n - f.time < 280 ? h && n - h.time < 330 && Math.hypot(f.x - h.x, f.y - h.y) < 24 ? (e.cancelable && e.preventDefault(), 
             R(f), h = null) : h = {
               x: f.x,
               y: f.y,
               time: n
-            } : h = null, u = t, f = null, m = n, t || (p = !1), k();
+            } : h = null, u = t, f = null, g = n, t || (p = !1), S();
           }
           return t.addEventListener("touchstart", e => {
             if (!d.ready || v(e.target)) return;
-            const t = M(e);
-            t && (m = performance.now(), p = p || t.count > 1 || d.scale > 1.0001, p && e.cancelable && e.preventDefault(), 
+            const t = F(e);
+            t && (g = performance.now(), p = p || t.count > 1 || d.scale > 1.0001, p && e.cancelable && e.preventDefault(), 
             u = t, f = 1 === t.count ? {
               x: t.x,
               y: t.y,
-              time: m
-            } : null, t.count > 1 && (h = null), k());
+              time: g
+            } : null, t.count > 1 && (h = null), S());
           }, {
             passive: !1
           }), t.addEventListener("touchmove", e => {
             if (!d.ready || !u) return;
-            const t = M(e);
+            const t = F(e);
             t && (f && Math.hypot(t.x - f.x, t.y - f.y) > 8 && (f = null), p = p || t.count > 1 || d.scale > 1.0001, 
             p && e.cancelable && e.preventDefault(), p && t.key === u.key && (t.count > 1 && u.distance > 0 ? C(d.scale * t.distance / u.distance, u, t) : 1 === t.count && d.scale > 1.0001 && (d.x += t.x - u.x, 
-            d.y += t.y - u.y, b(), k())), u = t);
+            d.y += t.y - u.y, b(), S())), u = t);
           }, {
             passive: !1
-          }), t.addEventListener("touchend", F, {
+          }), t.addEventListener("touchend", M, {
             passive: !1
-          }), t.addEventListener("touchcancel", F, {
+          }), t.addEventListener("touchcancel", M, {
             passive: !1
           }), t.addEventListener("keydown", e => {
             if (!d.ready || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -4971,11 +5214,11 @@
             if ("+" === e.key || "=" === e.key) C(d.scale * l); else if ("-" === e.key || "−" === e.key) C(d.scale / l); else if ("0" === e.key || "Home" === e.key || "Escape" === e.key) E(); else if (d.scale > 1.0001 && [ "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown" ].includes(e.key)) {
               const t = e.shiftKey ? 100 : 40;
               "ArrowLeft" === e.key && (d.x += t), "ArrowRight" === e.key && (d.x -= t), "ArrowUp" === e.key && (d.y += t), 
-              "ArrowDown" === e.key && (d.y -= t), b(), k();
+              "ArrowDown" === e.key && (d.y -= t), b(), S();
             } else t = !1;
             t && (e.preventDefault(), e.stopPropagation());
           }), window.addEventListener("blur", () => {
-            L(), k();
+            L(), S();
           }), document.addEventListener("visibilitychange", () => {
             document.hidden ? L() : P();
           }), window.ResizeObserver && new ResizeObserver(P).observe(t), window.addEventListener("resize", P), 
@@ -4983,27 +5226,27 @@
             w = !0, L();
           }), window.addEventListener("afterprint", () => {
             w = !1, requestAnimationFrame(P);
-          }), S(), {
+          }), k(), {
             loaded: function() {
-              !n.hidden && n.complete && n.naturalWidth && (d.ready = !0, E(), P(), S());
+              !n.hidden && n.complete && n.naturalWidth && (d.ready = !0, E(), P(), k());
             },
             suspend: function() {
               d.ready = !1, E();
             }
           };
         }();
-        function I() {
+        function D() {
           i.previewToken++, i.previewAbort?.abort(), i.previewAbort = null, N.suspend(), e("photoPreview").onload = null, 
           e("photoPreview").onerror = null, e("photoPreview").removeAttribute("src"), i.previewObjectURL && (URL.revokeObjectURL(i.previewObjectURL), 
           i.previewObjectURL = null);
           const t = i.previewReader;
           i.previewReader = null, t && t.readyState === FileReader.LOADING && t.abort(), i.previewURL = null;
         }
-        function D(e) {
+        function I(e) {
           return "string" == typeof e && /^(?:photos\/)?[^/\\\x00-\x1f\x7f]+\.jpe?g$/i.test(e) ? e.slice(e.lastIndexOf("/") + 1) : "";
         }
         function G(e) {
-          const t = D(e.packagePath);
+          const t = I(e.packagePath);
           if (!t) return [];
           const n = [ e.packagePath, e.packagePath === t ? "photos/" + t : t ];
           return n.includes(e.packageResolvedPath) && n.unshift(e.packageResolvedPath), [ ...new Set(n) ];
@@ -5011,27 +5254,27 @@
         function j(t) {
           N.suspend(), e("photoPreview").hidden = !0;
           const n = document.createElement("p");
-          n.textContent = `“${D(t.packagePath)}” could not be opened. Fully extract the ZIP, then open viewer-SnapShotFinder.html from the extracted folder with its JPG files. If the files are elsewhere, choose them below.`;
+          n.textContent = `“${I(t.packagePath)}” could not be opened. Fully extract the ZIP, then open viewer-SnapShotFinder.html from the extracted folder with its JPG files. If the files are elsewhere, choose them below.`;
           const o = document.createElement("button");
           o.type = "button", o.id = "packagePhotoAttach", o.textContent = "Choose packaged JPGs", 
-          o.addEventListener("click", () => m("ssf:package-pick")), e("previewError").replaceChildren(n, o), 
+          o.addEventListener("click", () => g("ssf:package-pick")), e("previewError").replaceChildren(n, o), 
           e("previewError").hidden = !1;
         }
-        function z() {
+        function O() {
           const t = p();
           if (!t) return;
           const n = [ t.hasGPS ? `${f(t.latitude)}, ${f(t.longitude)}` : t.error || "No embedded GPS coordinates", t.address?.formatted || "", Number.isFinite(t.heading) ? `Direction ${h(t)}` : "" ].filter(Boolean).join(" · ");
           e("selectedCaption").textContent = n, e("selectedCaption").title = n, e("gpsStamp").hidden = !t.hasGPS, 
           e("gpsStamp").textContent = t.hasGPS ? `${f(t.latitude)}, ${f(t.longitude)}` : "";
         }
-        function O(t, n = !0, o = !1) {
+        function z(t, n = !0, o = !1) {
           const a = i.photos.find(e => e.id === t);
           if (!a) return;
           const r = i.selected !== t;
           if (i.selected = t, e("photoEmpty").hidden = !0, e("selectedName").textContent = a.file.name, 
           e("selectedName").title = a.file.name, e("photoCounter").textContent = `${i.photos.indexOf(a) + 1} / ${i.photos.length}`, 
           e("previousPhoto").disabled = i.photos.length < 2, e("nextPhoto").disabled = i.photos.length < 2, 
-          r || !i.previewURL && !i.previewReader) if (I(), e("previewError").hidden = !0, 
+          r || !i.previewURL && !i.previewReader) if (D(), e("previewError").hidden = !0, 
           e("photoPreview").hidden = !1, e("photoPreview").alt = a.file.name, a.packagePath && !a.file.size) {
             const s = G(a), l = i.previewToken;
             function d(n) {
@@ -5072,23 +5315,23 @@
           } else {
             const p = new FileReader;
             i.previewReader = p;
-            const g = () => {
+            const m = () => {
               i.previewReader === p && (N.suspend(), e("photoPreview").hidden = !0, e("previewError").textContent = "This browser cannot preview this file. Any readable GPS data is still listed in the table.", 
               e("previewError").hidden = !1);
             };
-            p.onerror = g, p.onload = () => {
-              i.previewReader === p && (i.previewURL = p.result, e("photoPreview").onerror = g, 
+            p.onerror = m, p.onload = () => {
+              i.previewReader === p && (i.previewURL = p.result, e("photoPreview").onerror = m, 
               e("photoPreview").onload = () => {
                 i.previewReader === p && N.loaded();
               }, e("photoPreview").src = p.result);
             }, p.readAsDataURL(a.file);
           }
-          z();
+          O();
           for (const y of e("tableBody").rows) y.classList.toggle("selected", Number(y.dataset.id) === t);
           for (const v of i.maps.values()) v.vector && v.vector.changed();
           if (n && w(a)) {
             const b = new Set([ ...i.maps.values() ].filter(e => e.ready).map(e => e.map.getView()));
-            for (const S of b) S.animate({
+            for (const k of b) k.animate({
               center: window.ol.proj.fromLonLat([ a.longitude, a.latitude ]),
               duration: c ? 0 : 220
             });
@@ -5096,17 +5339,17 @@
           o && e("tableBody").querySelector(`tr[data-id="${t}"]`)?.scrollIntoView({
             block: "nearest",
             inline: "nearest"
-          }), de(), m("ssf:selection", {
+          }), de(), g("ssf:selection", {
             id: t
           });
         }
-        function V(e) {
-          const t = g();
+        function U(e) {
+          const t = m();
           if (!t.length) return;
           const n = t.findIndex(e => e.id === i.selected);
-          O(t[-1 === n ? 0 : (n + e + t.length) % t.length].id, !0, !0);
+          z(t[-1 === n ? 0 : (n + e + t.length) % t.length].id, !0, !0);
         }
-        function U(e) {
+        function V(e) {
           if (e.hasGPS && t.nearLuxembourg(e.latitude, e.longitude) && "function" == typeof window.proj4) try {
             window.proj4.defs("EPSG:2169") || window.proj4.defs("EPSG:2169", "+proj=tmerc +lat_0=49.83333333333334 +lon_0=6.166666666666667 +k=1 +x_0=80000 +y_0=100000 +ellps=intl +towgs84=-189.6806,18.3463,-42.7695,-0.33746,-3.09264,2.53861,0.4598 +units=m +no_defs");
             const t = window.proj4("EPSG:4326", "EPSG:2169", [ e.longitude, e.latitude ]);
@@ -5126,7 +5369,7 @@
           current: null,
           cache: [],
           links: new WeakMap
-        }, Y = {
+        }, q = {
           "image/jpeg": [ ".jpg", ".jpeg", ".jpe" ],
           "image/png": [ ".png" ],
           "image/tiff": [ ".tif", ".tiff" ],
@@ -5138,10 +5381,10 @@
           "image/avif": [ ".avif" ],
           "image/x-adobe-dng": [ ".dng" ],
           "image/x-raw": [ ".raw" ]
-        }, q = new Set(Object.values(Y).flat()), W = new Set([ ...Object.keys(Y), "image/jpg", "image/pjpeg", "image/x-png", "image/x-tiff", "image/x-ms-bmp" ]), X = [ ...Object.keys(Y), ...q ].join(","), K = "snapshotfinder-photos", Z = e => /\.[^.]+$/.exec(e || "")?.[0].toLowerCase() || "", _ = e => !Z(e) || q.has(Z(e));
+        }, Y = new Set(Object.values(q).flat()), W = new Set([ ...Object.keys(q), "image/jpg", "image/pjpeg", "image/x-png", "image/x-tiff", "image/x-ms-bmp" ]), X = [ ...Object.keys(q), ...Y ].join(","), K = "snapshotfinder-photos", Z = e => /\.[^.]+$/.exec(e || "")?.[0].toLowerCase() || "", _ = e => !Z(e) || Y.has(Z(e));
         function J(e) {
           const t = Z(e.name), n = (e.type || "").toLowerCase();
-          return !(t && !q.has(t)) && (t && (!n || "application/octet-stream" === n) || W.has(n));
+          return !(t && !Y.has(t)) && (t && (!n || "application/octet-stream" === n) || W.has(n));
         }
         let Q = 0, ee = !1, te = !1;
         const ne = [ "status", "hasGPS", "latitude", "longitude", "heading", "headingRef", "altitude", "orientation", "cameraTime", "captureTime", "error", "xLuref", "yLuref", "address", "road", "rail", "rails", "railStatus", "railError", "addressStatus", "addressError", "addressSource", "registerRevision", "addressReady", "roadReady", "railReady", "packageResults" ];
@@ -5234,7 +5477,7 @@
                     o = Array.isArray(t) && 1 === t.length && t[0] === e.file.name;
                   } else if ("function" == typeof n.handle.getFileHandle) {
                     const t = await n.handle.getFileHandle(e.file.name);
-                    o = !0 === await ge(t, e.fileHandle);
+                    o = !0 === await me(t, e.fileHandle);
                   }
                 } catch (e) {}
                 if (!t()) return;
@@ -5263,18 +5506,18 @@
                 n.textContent = `${t + 1}. ${e.name} · ${e.files.length} photos · saved ${o}`, h.appendChild(n);
               }), c.disabled = !0;
             }
-            function m() {
+            function g() {
               c.disabled = "" === h.value;
             }
-            h.addEventListener("change", m), e("folderMatches").hidden = !r.length;
-            const g = e("folderMatchList");
-            g.replaceChildren();
+            h.addEventListener("change", g), e("folderMatches").hidden = !r.length;
+            const m = e("folderMatchList");
+            m.replaceChildren();
             const w = r.map(e => {
               const t = document.createElement("label");
               t.className = "check";
               const n = document.createElement("input");
               return n.type = "checkbox", n.checked = e.checked, t.append(n, document.createTextNode(`No. ${e.photo.id} · ${e.photo.file.name}`)), 
-              g.appendChild(t), {
+              m.appendChild(t), {
                 input: n,
                 choice: e
               };
@@ -5282,17 +5525,17 @@
             let y = !1;
             function v() {
               c.removeEventListener("click", L), u.removeEventListener("click", b), f.removeEventListener("click", E), 
-              h.removeEventListener("change", m), f.hidden = !0, c.disabled = !1, e("folderSavedChoice").hidden = !0, 
-              h.replaceChildren(), d.removeEventListener("cancel", S), t.dismissPrompt === b && (t.dismissPrompt = null), 
-              d.open && d.close(), g.replaceChildren();
+              h.removeEventListener("change", g), f.hidden = !0, c.disabled = !1, e("folderSavedChoice").hidden = !0, 
+              h.replaceChildren(), d.removeEventListener("cancel", k), t.dismissPrompt === b && (t.dismissPrompt = null), 
+              d.open && d.close(), m.replaceChildren();
             }
             function b() {
               y || (y = !0, v(), l(re()));
             }
-            function S(e) {
+            function k(e) {
               e.preventDefault(), b();
             }
-            function k(e) {
+            function S(e) {
               if (!y) {
                 y = !0;
                 try {
@@ -5305,13 +5548,13 @@
               }
             }
             function L() {
-              c.disabled || k(a);
+              c.disabled || S(a);
             }
             function E() {
-              i.alternative && k(i.alternative.action);
+              i.alternative && S(i.alternative.action);
             }
             t.dismissPrompt = b, c.addEventListener("click", L), u.addEventListener("click", b), 
-            f.addEventListener("click", E), d.addEventListener("cancel", S);
+            f.addEventListener("click", E), d.addEventListener("cancel", k);
             try {
               d.showModal(), (c.disabled ? h : c).focus();
             } catch (e) {
@@ -5344,11 +5587,11 @@
             }
           })) : Promise.reject(new Error("This browser does not offer a suitable folder picker. Open photos and drag-and-drop remain available."));
         }
-        async function me(e, t, n = !1) {
+        async function ge(e, t, n = !1) {
           se(e);
           const o = !te && "function" == typeof window.showDirectoryPicker && window.isSecureContext, a = "webkitdirectory" in document.createElement("input");
           if (!o && !a) throw new Error("Folder selection is not supported in this browser. The viewer stays off; use Open photos or drag-and-drop.");
-          if (n && !navigator.userActivation?.isActive) return he(e, `Select the source folder containing “${e.reference.file.name}”. No usable matching saved folder list was found. Your current photo selection stays unchanged until the folder is ready.`, "Choose folder (read only)", () => me(e, t));
+          if (n && !navigator.userActivation?.isActive) return he(e, `Select the source folder containing “${e.reference.file.name}”. No usable matching saved folder list was found. Your current photo selection stays unchanged until the folder is ready.`, "Choose folder (read only)", () => ge(e, t));
           le(`Choose the folder containing “${e.reference.file.name}”. ` + (o && t ? "Its file handle is supplied as the dialog’s start location. " : "This browser has not provided a usable source-folder handle. ") + "Only photos directly in that folder will be read.");
           let r, i = o;
           try {
@@ -5370,7 +5613,7 @@
           if (se(e), i) {
             if (!r || "directory" !== r.kind) throw new Error("Please select one folder, not a file.");
             for (const t of B.cache) {
-              if (t.handle && !0 === await ge(t.handle, r)) return se(e), t;
+              if (t.handle && !0 === await me(t.handle, r)) return se(e), t;
               se(e);
             }
             return {
@@ -5388,7 +5631,7 @@
             evidence: null
           };
         }
-        async function ge(e, t) {
+        async function me(e, t) {
           if (!e || !t) return null;
           if (e === t) return !0;
           if ("function" != typeof e.isSameEntry) return null;
@@ -5434,11 +5677,11 @@
           return !0;
         }
         function be(e) {
-          Ae(), i.mapStyles.clear(), I(), i.selected = null;
-          for (const e of i.photos) U(e);
-          A(), k(), Ue(), He(!1), e && O(e.id, !1, !0), Ce();
+          Ae(), i.mapStyles.clear(), D(), i.selected = null;
+          for (const e of i.photos) V(e);
+          A(), S(), Ve(), He(!1), e && z(e.id, !1, !0), Ce();
         }
-        async function Se(t) {
+        async function ke(t) {
           let n = B.links.get(t.reference)?.folder;
           if (!n) {
             const e = function(e) {
@@ -5472,14 +5715,14 @@
                 folders: n,
                 alternative: {
                   label: "Choose folder…",
-                  action: () => me(e, e.reference.fileHandle).then(e => ({
+                  action: () => ge(e, e.reference.fileHandle).then(e => ({
                     folder: e,
                     confirmed: !1
                   }))
                 }
               });
               return se(e), a.confirmed && (e.confirmedFolder = a.folder), a.folder;
-            }(t, e), se(t), n || (n = await me(t, t.reference.fileHandle, !0))) : n = await me(t, t.reference.fileHandle);
+            }(t, e), se(t), n || (n = await ge(t, t.reference.fileHandle, !0))) : n = await ge(t, t.reference.fileHandle);
           }
           se(t), le(`Listing direct files in “${n.name || "the selected folder"}”…`), se(t);
           const a = await async function(e, t) {
@@ -5553,7 +5796,7 @@
           const r = await async function(t, n, o) {
             const {entries: a} = t, r = o.reference, s = a.find(e => e.file.name === r.file.name);
             if (!s) throw new Error(`“${r.file.name}” is not a direct image file in “${n.name}”. Select its immediate source folder, not a parent folder.`);
-            const l = await ge(r.fileHandle, s.handle);
+            const l = await me(r.fileHandle, s.handle);
             if (se(o), !1 === l) throw new Error("The selected folder contains a different file, not the reference file. Your selection is unchanged.");
             if (!0 !== l && !await ve(r.file, s.file, o)) throw new Error("The direct file with the reference name has different contents. Select the folder of the loaded reference photo.");
             se(o);
@@ -5566,7 +5809,7 @@
               const i = d.get(e.file.name);
               i && ye(i.file, e.file) && (e.reuse = i);
               for (const t of c.get(e.file.name) || []) {
-                const a = await ge(t.fileHandle, e.handle);
+                const a = await me(t.fileHandle, e.handle);
                 se(o);
                 const i = B.links.get(t), d = !0 === a || i?.folder === n && i.name === e.file.name, c = t === r && e === s && !0 !== l || t.file === e.file || !0 === a && ye(t.file, e.file) || await ve(t.file, e.file, o);
                 se(o), c && (e.dataMatches.push(t), e.reuse && !t.packageResults && "ready" !== t.addressStatus && "none" !== t.addressStatus || (e.reuse = t)), 
@@ -5586,11 +5829,11 @@
             }
             s.sourceMatches.includes(r) || s.sourceMatches.push(r);
             const p = !0 === l ? "handle" : "confirmation";
-            let m = 0;
+            let g = 0;
             return le(`Reading folder metadata: 0 / ${a.length}…`), e("progressTrack").hidden = !1, 
             e("progressBar").style.width = "0%", await we(a, o, async t => {
               t.reuse && "reading" !== t.reuse.status ? oe(t.photo, t.reuse) : await Le(t.photo, () => ie(o)), 
-              se(o), m++, e("progressBar").style.width = 100 * m / a.length + "%", le(`Reading folder metadata: ${m} / ${a.length}… Your original selection remains available; use Cancel folder loading to stop.`);
+              se(o), g++, e("progressBar").style.width = 100 * g / a.length + "%", le(`Reading folder metadata: ${g} / ${a.length}… Your original selection remains available; use Cancel folder loading to stop.`);
             }), {
               entries: a,
               refEntry: s,
@@ -5607,7 +5850,7 @@
             processed: i.processed,
             entries: r.entries,
             packageView: i.packageView || null
-          }, i.packageView && (i.packageView = null, m("ssf:package-clear")), i.generation++, 
+          }, i.packageView && (i.packageView = null, g("ssf:package-clear")), i.generation++, 
           B.pending = null, B.active = !0, B.current = n, n.records = r.entries.map(e => e.photo), 
           n.evidence = r.evidence, n.handle || (n.files = r.entries.map(e => e.file), n.snapshotIgnored = a.ignored, 
           n.snapshotCaptured ||= Date.now()), B.cache.includes(n) || B.cache.push(n), n.declinedSources ||= new WeakSet;
@@ -5621,13 +5864,13 @@
           i.photos = n.records, i.processed = i.photos.length, i.ignored = a.ignored, i.busy = !1, 
           e("progressTrack").hidden = !0, be(r.refEntry.photo), Ke(o), Re();
         }
-        function ke() {
+        function Se() {
           if (ce(), !B.active || !B.saved) return;
           const e = p(), t = B.saved, n = t.entries.find(t => t.photo === e), a = n?.sourceMatches.find(e => e === t.reference) || n?.sourceMatches[0] || t.reference;
           H(), i.generation++;
           for (const e of t.entries) for (const t of e.dataMatches) oe(t, e.photo);
           i.photos = t.photos, i.ignored = t.ignored, i.processed = t.processed, i.packageView = t.packageView || null, 
-          i.busy = !1, B.active = !1, B.saved = null, be(a), Ke(o), i.packageView && m("ssf:package-active", {
+          i.busy = !1, B.active = !1, B.saved = null, be(a), Ke(o), i.packageView && g("ssf:package-active", {
             manifest: i.packageView
           }), Re();
         }
@@ -5641,7 +5884,7 @@
             Object.assign(e, a), e.status = e.hasGPS ? "ready" : "no-gps", e.address = null, 
             e.road = null, e.rail = null, e.rails = null, e.railStatus = "", e.railError = "", 
             e.addressSource = null, e.registerRevision = null, e.addressStatus = e.hasGPS ? "idle" : "unavailable", 
-            U(e), e.hasGPS && Re();
+            V(e), e.hasGPS && Re();
           } catch (t) {
             if (!n()) return;
             e.status = t.code || "read-error", e.error = t.message || "Metadata could not be read.";
@@ -5663,7 +5906,7 @@
               excludeAcceptAllOption: !0,
               types: [ {
                 description: "Photos",
-                accept: Y
+                accept: q
               } ],
               ...r ? {
                 startIn: r
@@ -5698,7 +5941,7 @@
           ++Q;
           const s = async function(t, n = new Map) {
             const s = Array.from(t), l = s.filter(J);
-            if (l.length || (ke(), ue(!0)), !l.length) return void v("No photo files found. Documents, sidecar files and videos are ignored.");
+            if (l.length || (Se(), ue(!0)), !l.length) return void v("No photo files found. Documents, sidecar files and videos are ignored.");
             const c = function(e) {
               const t = new Map;
               if (!a) return t;
@@ -5717,11 +5960,11 @@
             const f = i.generation;
             i.ignored = s.length - l.length, l.sort((e, t) => d.compare(e.webkitRelativePath || e.name, t.webkitRelativePath || t.name));
             const h = new Set([ ...c.values() ].map(e => e.id)), p = new Set(h);
-            let g = 1;
+            let m = 1;
             i.photos = l.map(e => {
               const t = c.get(e);
-              for (;p.has(g); ) g++;
-              const n = t ? t.id : g++;
+              for (;p.has(m); ) m++;
+              const n = t ? t.id : m++;
               p.add(n);
               const o = ae(e, n);
               return t && rt(o, t), o;
@@ -5735,7 +5978,7 @@
             }, "boolean" == typeof a.linkMaps && (e("linkMaps").checked = a.linkMaps), [ "gps", "address", "timeline" ].includes(a.tab) && $(a.tab), 
             Ke(o));
             const w = c.size && i.photos.some(e => e.id === a.selectedId && c.has(e.file)) ? a.selectedId : i.photos[0].id;
-            i.busy = !0, e("progressTrack").hidden = !1, k(), A(), O(w, !1), b(`Reading photo metadata: 0 / ${i.photos.length}…`);
+            i.busy = !0, e("progressTrack").hidden = !1, S(), A(), z(w, !1), b(`Reading photo metadata: 0 / ${i.photos.length}…`);
             let y = 0;
             await Promise.all(Array.from({
               length: Math.min(4, i.photos.length)
@@ -5745,29 +5988,29 @@
                 if (await fe(t, n.get(t.file), () => f === i.generation), f !== i.generation) return;
                 if (c.has(t.file) || await Le(t, () => f === i.generation), f !== i.generation) return;
                 i.processed++, e("progressBar").style.width = 100 * i.processed / i.photos.length + "%", 
-                b(`Reading photo metadata: ${i.processed} / ${i.photos.length}…`), S(), t.id === i.selected && z(), 
+                b(`Reading photo metadata: ${i.processed} / ${i.photos.length}…`), k(), t.id === i.selected && O(), 
                 await u(0);
               }
-            })), f === i.generation && (i.busy = !1, e("progressTrack").hidden = !0, k(), A(), 
-            Ue(), He(!1), z(), Ce(), i.packageView && m("ssf:package-active", {
+            })), f === i.generation && (i.busy = !1, e("progressTrack").hidden = !0, S(), A(), 
+            Ve(), He(!1), O(), Ce(), i.packageView && g("ssf:package-active", {
               manifest: i.packageView
             }), Re());
           }(t, n), l = i.generation;
           s.catch(t => {
             l === i.generation && (console.error(t), i.busy = !1, e("progressTrack").hidden = !0, 
-            k(), b("Photo processing could not finish. Try a smaller selection."));
+            S(), b("Photo processing could not finish. Try a smaller selection."));
           });
         }
         function xe(t = !0, n = !1) {
-          m("ssf:package-clear"), i.packageView = null, ++Q, ue(n), Ae(), i.generation++, 
-          H(), I(), i.photos = [], i.selected = null, i.processed = 0, i.busy = !1, i.mapStyles.clear(), 
+          g("ssf:package-clear"), i.packageView = null, ++Q, ue(n), Ae(), i.generation++, 
+          H(), D(), i.photos = [], i.selected = null, i.processed = 0, i.busy = !1, i.mapStyles.clear(), 
           i.ignored = 0, Ke(o), e("photoEmpty").hidden = !1, e("photoPreview").hidden = !0, 
           e("previewError").hidden = !0, e("gpsStamp").hidden = !0, e("selectedName").textContent = "No photo selected", 
           e("selectedCaption").textContent = "Select a photo, a table row or a numbered map marker.", 
           e("selectedCaption").title = "", e("photoCounter").textContent = "0 / 0", e("previousPhoto").disabled = !0, 
           e("nextPhoto").disabled = !0, e("progressTrack").hidden = !0, e("progressBar").style.width = "0%", 
-          e("fileInput").value = "", e("filterPhotos").value = "", i.filter = "", A(), k(), 
-          Ue();
+          e("fileInput").value = "", e("filterPhotos").value = "", i.filter = "", A(), S(), 
+          Ve();
           for (const e of i.maps.values()) if (e.ready) {
             const t = e.map.getView();
             t.setCenter(window.ol.proj.fromLonLat(l)), t.setZoom(9);
@@ -5800,7 +6043,7 @@
           i.geocoder = a;
           const r = ++i.addressRun, s = i.generation, l = () => !a.signal.aborted && s === i.generation && r === i.addressRun;
           for (const e of t) for (const t of e) t.addressStatus = "queued", t.addressError = "";
-          S();
+          k();
           let d = 0;
           try {
             await Promise.all(Array.from({
@@ -5827,24 +6070,24 @@
                   if (!l()) return;
                   for (const n of e) n.addressStatus = "error", n.addressError = t.message || "Local search unavailable.";
                 }
-                S(), e.some(e => e.id === i.selected) && z(), await u(0);
+                k(), e.some(e => e.id === i.selected) && O(), await u(0);
               }
             }));
           } finally {
-            r === i.addressRun && s === i.generation && (i.geocoder = null, S(), i.busy || Ce(), 
+            r === i.addressRun && s === i.generation && (i.geocoder = null, k(), i.busy || Ce(), 
             i.photos.some(e => e.hasGPS && "idle" === e.addressStatus && (!e.packageResults || o.addressReady && o.roadReady && o.railReady)) && Re());
           }
         }
-        const Me = new Map;
-        let Fe = [];
+        const Fe = new Map;
+        let Me = [];
         function Te(e, t) {
           t.disposed = !0, t.view && t.rotationListener && t.view.un("change:rotation", t.rotationListener), 
           t.viewListener && t.map.un("change:view", t.viewListener), t.layer.setMap(null), 
-          Me.delete(e);
+          Fe.delete(e);
         }
         function Ae() {
-          for (const [e, t] of Me) Te(e, t);
-          Fe = [];
+          for (const [e, t] of Fe) Te(e, t);
+          Me = [];
         }
         function $e(e, n) {
           const o = window.ol, a = e.map(e => function(e, t) {
@@ -5899,7 +6142,7 @@
             zIndex: 5
           });
         }
-        function Ie(e, t) {
+        function De(e, t) {
           if (!(t > 0 && Number.isFinite(t))) return new Map;
           const n = e.map.getView().getRotation() || 0;
           if (e.layout?.resolution === t && e.layout.rotation === n) return e.layout.styles;
@@ -5933,7 +6176,7 @@
             return r.push(l), n ? -u : u;
           }
           for (const n of e.features) {
-            const [e, r] = n.getGeometry().getCoordinates(), i = n.get("timelineDirect"), s = i ? "#b85c23" : "#126c9f", l = r[0] - e[0], d = r[1] - e[1], c = Math.hypot(l, d), f = [ (e[0] + r[0]) / 2, (e[1] + r[1]) / 2 ], h = new o.geom.Point(f), p = i ? [ 8, 6 ] : void 0, m = [ new o.style.Style({
+            const [e, r] = n.getGeometry().getCoordinates(), i = n.get("timelineDirect"), s = i ? "#b85c23" : "#126c9f", l = r[0] - e[0], d = r[1] - e[1], c = Math.hypot(l, d), f = [ (e[0] + r[0]) / 2, (e[1] + r[1]) / 2 ], h = new o.geom.Point(f), p = i ? [ 8, 6 ] : void 0, g = [ new o.style.Style({
               stroke: new o.style.Stroke({
                 color: "rgba(255,255,255,.8)",
                 width: 4.5,
@@ -5950,7 +6193,7 @@
             }) ];
             if (c > 2 * t) {
               const e = l / c, n = d / c, a = Math.min((i ? 32 : 18) * t, .3 * c), u = [ r[0] - e * a, r[1] - n * a ], f = Math.min(10 * t, .28 * c), h = .45 * f, p = [ u[0] - e * f, u[1] - n * f ];
-              m.push(new o.style.Style({
+              g.push(new o.style.Style({
                 geometry: new o.geom.Polygon([ [ u, [ p[0] - n * h, p[1] + e * h ], [ p[0] + n * h, p[1] - e * h ], u ] ]),
                 fill: new o.style.Fill({
                   color: s
@@ -5961,7 +6204,7 @@
                 }),
                 zIndex: 3
               }));
-            } else m.push(new o.style.Style({
+            } else g.push(new o.style.Style({
               geometry: h,
               image: new o.style.Circle({
                 radius: 4,
@@ -5975,8 +6218,8 @@
               }),
               zIndex: 3
             }));
-            const g = n.get("timelineTimeLabel"), w = n.get("timelineDistanceLabel");
-            m.push(Ne(h, g, u(f, g, !0, i), s)), m.push(Ne(h, w, u(f, w, !1, i), s)), a.set(n, m);
+            const m = n.get("timelineTimeLabel"), w = n.get("timelineDistanceLabel");
+            g.push(Ne(h, m, u(f, m, !0, i), s)), g.push(Ne(h, w, u(f, w, !1, i), s)), a.set(n, g);
           }
           return e.layout = {
             resolution: t,
@@ -5984,7 +6227,7 @@
             styles: a
           }, a;
         }
-        function De(e) {
+        function Ie(e) {
           const t = e.map.getView();
           e.view !== t && (e.view && e.rotationListener && e.view.un("change:rotation", e.rotationListener), 
           e.view = t, e.rotationListener = () => {
@@ -5992,16 +6235,16 @@
           }, t.on("change:rotation", e.rotationListener), e.layout = null);
         }
         function Ge(e = function() {
-          return t.buildTimelineRows(g());
+          return t.buildTimelineRows(m());
         }()) {
           if ("timeline" !== i.tab || !window.ol || e.length < 2) return void Ae();
-          Fe = e;
+          Me = e;
           const n = new Set([ ...i.maps.values() ].filter(e => e.ready && e.map));
-          for (const [e, t] of Me) n.has(e) && e.map === t.map || Te(e, t);
+          for (const [e, t] of Fe) n.has(e) && e.map === t.map || Te(e, t);
           const o = JSON.stringify(e.map(e => [ e.photo.id, e.photo.hasGPS, e.photo.latitude, e.photo.longitude, e.timestampMs, e.deltaMs, e.distanceMeters ]));
           for (const t of n) {
             const n = t.map.getView().getProjection(), a = n.getCode();
-            let r = Me.get(t);
+            let r = Fe.get(t);
             if (r && r.signature === o && r.projectionCode === a) continue;
             const i = $e(e, n);
             if (i.features.length) {
@@ -6025,13 +6268,13 @@
                   renderBuffer: 260,
                   updateWhileAnimating: !0,
                   updateWhileInteracting: !0,
-                  style: (e, t) => Ie(r, t).get(e) || []
-                }), r.layer.set("ssfTimeline", !0), Me.set(t, r), r.viewListener = () => {
-                  r.disposed || (r.signature = null, Ge(Fe));
+                  style: (e, t) => De(r, t).get(e) || []
+                }), r.layer.set("ssfTimeline", !0), Fe.set(t, r), r.viewListener = () => {
+                  r.disposed || (r.signature = null, Ge(Me));
                 }, r.map.on("change:view", r.viewListener);
               }
               r.signature = o, r.projectionCode = a, r.features = i.features, r.coordinates = i.coordinates, 
-              r.layout = null, r.source.clear(), r.source.addFeatures(i.features), De(r), r.attached || (r.layer.setMap(r.map), 
+              r.layout = null, r.source.clear(), r.source.addFeatures(i.features), Ie(r), r.attached || (r.layer.setMap(r.map), 
               r.attached = !0);
             } else r && Te(t, r);
           }
@@ -6040,12 +6283,12 @@
           const a = e("mapNotice" + t), r = document.createElement("strong"), i = document.createElement("p");
           r.textContent = n, i.textContent = o, a.replaceChildren(r, i), a.hidden = !1;
         }
-        function ze() {
+        function Oe() {
           i.mapError = !0, e("serviceStatus").textContent = "Map connection unavailable. Local photo reading still works.", 
           e("mapStatusDot").className = "status-dot warn";
           for (const e of s) i.maps.get(e)?.ready || je(e, "Maps are unavailable", "Check your internet connection and Geoportail domain access. Reopen or reload this page when connected. Photo metadata remains readable.");
         }
-        function Oe(t) {
+        function ze(t) {
           const n = new Set(t.map(e => e.id));
           if (n.size !== i.mapMatches.size || [ ...n ].some(e => !i.mapMatches.has(e))) {
             i.mapMatches = n;
@@ -6057,7 +6300,7 @@
             n && (n.hidden = a === o.length), i.maps.get(t)?.ready && (e("mapStatus" + t).textContent = o.length ? i.filter ? `${a} of ${o.length} photo locations match · pale = filtered out` : `${o.length} photo location${1 === o.length ? "" : "s"} · click a marker to select` : "Luxembourg · Geoportail");
           }
         }
-        function Ve(e) {
+        function Ue(e) {
           const t = window.ol;
           if (e.get("centre")) {
             const e = "centre";
@@ -6098,7 +6341,7 @@
             zIndex: a ? o ? 100 : 10 : o ? 5 : 4
           })), i.mapStyles.get(r);
         }
-        function Ue() {
+        function Ve() {
           if (!window.ol) return;
           const t = window.ol, n = i.photos.filter(w);
           for (const o of i.maps.values()) {
@@ -6118,7 +6361,7 @@
             }
             o.source.addFeatures(a), e("legend" + o.id).hidden = !n.length;
           }
-          Oe(g()), k();
+          ze(m()), S();
         }
         function He(e = !0, t = null) {
           const n = i.photos.filter(w);
@@ -6152,10 +6395,10 @@
             }));
           }
         }
-        function Ye(t, n = 0) {
+        function qe(t, n = 0) {
           if (t.backgroundChosen) return;
           const o = e("bgMap3").querySelector("select");
-          if (!o || !o.options.length) return void (n < 40 ? setTimeout(() => Ye(t, n + 1), 50) : v("The overview background selector is not ready. Reload the page to retry."));
+          if (!o || !o.options.length) return void (n < 40 ? setTimeout(() => qe(t, n + 1), 50) : v("The overview background selector is not ready. Reload the page to retry."));
           const a = Array.from(o.options).filter(e => "blank" !== e.value), r = e => {
             const n = t.map.layersConfig?.[e.value];
             return [ e.textContent, n?.name, n?.layer ].filter(Boolean).join(" ").toLowerCase();
@@ -6171,7 +6414,7 @@
             v("Use cadastral parcels and buildings in map 04, not on the aerial overview."));
           });
         }
-        function qe(t) {
+        function Ye(t) {
           const n = window.ol, o = 3 === t ? [ "320", "423", "415", "352", "351", "152" ] : [ "359", "353", "320", "423", "415", "352", "351", "199", "152" ], a = {
             id: t,
             ready: !1,
@@ -6228,13 +6471,13 @@
                 }
                 const i = t.map.getLayers();
                 i.forEach(r), i.on("add", a), nt();
-              }(a), Be(), Ue();
+              }(a), Be(), Ve();
               const o = i.packageView?.maps || [], r = e => Array.isArray(e.center) && 2 === e.center.length && e.center.every(Number.isFinite);
               o.some(e => e.id === t && r(e)) || e("linkMaps").checked && o.some(r) || He(!1, t), 
               Ge();
-              for (const e of i.photos) U(e);
-              S(), e("serviceStatus").textContent = 2 === [ ...i.maps.values() ].filter(e => e.ready).length ? "Geoportail map engine ready." : "Connecting the second map…", 
-              e("mapStatusDot").className = "status-dot ok", 3 === t && Ye(a), m("ssf:maps-ready", {
+              for (const e of i.photos) V(e);
+              k(), e("serviceStatus").textContent = 2 === [ ...i.maps.values() ].filter(e => e.ready).length ? "Geoportail map engine ready." : "Connecting the second map…", 
+              e("mapStatusDot").className = "status-dot ok", 3 === t && qe(a), g("ssf:maps-ready", {
                 id: t
               });
             }
@@ -6243,7 +6486,7 @@
           }), a.vector = new n.layer.Vector({
             className: "ssf-photo-layer",
             source: a.source,
-            style: Ve,
+            style: Ue,
             zIndex: 1e3
           }), a.map.addLayer(a.vector), a.map.on("singleclick", e => {
             const t = [];
@@ -6255,7 +6498,7 @@
               layerFilter: e => e === a.vector
             }), !t.length) return;
             const n = [ ...new Set(t) ].sort((e, t) => e - t), o = n.indexOf(i.selected);
-            O(n.length > 1 ? n[(o + 1) % n.length] : n[0], !1, !0), n.length > 1 && v(`${n.length} photos overlap here. Click again to cycle through them.`);
+            z(n.length > 1 ? n[(o + 1) % n.length] : n[0], !1, !0), n.length > 1 && v(`${n.length} photos overlap here. Click again to cycle through them.`);
           }), a.map.on("pointermove", n => {
             if (n.dragging) return;
             const o = a.map.hasFeatureAtPixel(n.pixel, {
@@ -6273,11 +6516,11 @@
           if (i.mapStarted || !window.lux?.Map || !window.ol?.source?.Vector) return !1;
           i.mapStarted = !0;
           try {
-            for (const e of s) qe(e);
-            for (const e of i.photos) U(e);
-            return S(), !0;
+            for (const e of s) Ye(e);
+            for (const e of i.photos) V(e);
+            return k(), !0;
           } catch (e) {
-            return console.error("Geoportail initialisation:", e), ze(), !0;
+            return console.error("Geoportail initialisation:", e), Oe(), !0;
           }
         }
         function Xe(t, n) {
@@ -6287,23 +6530,79 @@
         function Ke(t) {
           const n = o.revision, a = o.lookupEpoch;
           o = t = t || {};
-          const r = e => e ? String(e).slice(0, 10) : "—", s = [ t.addressReady ? `Addresses: ${r(t.addressesDate)}` : "Addresses: online lookup until the register is ready", t.roadReady ? `Roads: ${r(t.roadsDate)}` : "Roads: waiting for download", t.railReady ? `CFL: ${r(t.railInfo?.date)} (source date)` : "CFL: waiting for download" ];
-          var l;
-          t.checkedAt && s.push(`Last successful check: ${l = t.checkedAt, l && Number.isFinite(Date.parse(l)) ? new Date(l).toLocaleString() : "—"}`), 
-          t.saved ? s.push("Registers saved in this browser") : t.sessionOnly && s.push("Registers available for this session; browser storage unavailable"), 
-          t.message && s.push(t.message), e("registerStatus").textContent = (i.photos.some(e => e.packageResults) ? "Saved photo locations are available. " : "") + s.join(" · "), 
-          e("updateRegisters").disabled = "loading" === t.phase || "updating" === t.phase;
-          const d = e("exportRegisterHTML");
-          if (d && (d.disabled = !1), t.revision && n !== t.revision || void 0 !== t.lookupEpoch && a !== t.lookupEpoch) {
+          const r = e => e ? String(e).slice(0, 10) : "—", s = [ {
+            key: "addresses",
+            label: "Addresses",
+            ready: !!t.addressReady,
+            date: t.addressesDate
+          }, {
+            key: "roads",
+            label: "Roads",
+            ready: !!t.roadReady,
+            date: t.roadsDate
+          }, {
+            key: "rail",
+            label: "CFL",
+            ready: !!t.railReady,
+            date: t.railInfo?.date
+          } ], l = !t.phase || "loading" === t.phase, d = l || "updating" === t.phase, c = void 0 === t.online ? !1 !== navigator.onLine : t.online, u = s.every(e => e.ready), f = s.some(e => e.ready), h = u && s.every(e => "cache" === t.sources?.[e.key]), p = u && s.every(e => "download" === t.sources?.[e.key]), g = i.photos.some(e => e.packageResults && (e.hasGPS || e.address || e.road || e.rails?.length)), m = {
+            checking: "checking",
+            downloading: "downloading",
+            preparing: "preparing"
+          };
+          let w;
+          if (l) w = "Registers: loading browser data…"; else if (u) {
+            const e = "Addresses, roads & CFL";
+            if (d && c) {
+              const n = Object.values(t.activity || {});
+              w = `${e}: available locally · ${n.includes("downloading") ? "Downloading updates…" : n.includes("preparing") ? "Preparing updates…" : "Checking updates…"}`;
+            } else w = c ? t.updateFailed ? `Update failed · ${e} remain available locally.` : "current" === t.updateResult ? `${e}: up to date${h ? " · Using browser storage" : ""}.` : "updated" === t.updateResult ? `${e}: updated.` : h ? `${e}: loaded from browser storage.` : `${e}: ${p ? "downloaded" : "available locally"}.` : `Offline · ${e}: ${h ? "loaded from browser storage" : "available locally"}.`;
+            !d && t.sessionOnly ? w += " Available for this session only." : d || !c || !t.saved || h || t.updateFailed || (w += " Saved in this browser.");
+          } else {
+            const e = s.map(e => {
+              let n = e.ready ? "local" : "";
+              const o = "failed" === t.activity?.[e.key] || !!t.errors?.[e.key];
+              return !n && d && c && !o && (n = m[t.activity?.[e.key]] || "pending"), n || (n = "addresses" === e.key && c ? "online lookup" : "unavailable"), 
+              `${e.label}: ${n}`;
+            });
+            w = (c ? t.updateFailed ? f ? "Update incomplete · " : "Download failed · " : "" : "Offline · ") + e.join(" · "), 
+            f && t.sessionOnly && (w += " · Session only");
+          }
+          g && (w = "Saved photo locations available · " + w), e("registerStatus").textContent !== w && (e("registerStatus").textContent = w), 
+          e("registerStatusPanel").dataset.state = t.updateFailed && c ? "warning" : d ? "busy" : f ? "ready" : "offline", 
+          e("updateRegisters").disabled = d || !c, e("updateRegisters").textContent = l ? "Loading…" : d && c ? "Updating…" : "Check updates", 
+          e("updateRegisters").title = c ? "Check official sources and download only new or missing registers" : "Connect to the Internet to check for register updates", 
+          e("forceUpdateRegisters").disabled = d || !c;
+          for (const n of s) {
+            const o = t.sources?.[n.key];
+            e("registerSource-" + n.key).textContent = n.ready ? "cache" === o ? "Browser storage" : "download" === o ? "Downloaded this session" : "Available locally" : "Not loaded";
+            const a = t.activity?.[n.key], i = {
+              checking: "Checking source…",
+              downloading: "Downloading…",
+              preparing: "Preparing local search…"
+            }[a], s = t.errors?.[n.key] || "";
+            let u;
+            u = l ? "Loading browser data…" : i && d && c ? i : s || "failed" === a ? n.ready ? "Update failed; current data kept" : "Could not load" : n.ready ? "current" === t.updateResult ? "Up to date" : "Ready for local search" : c ? d ? "Pending" : "Not available" : "Not available offline", 
+            e("registerActivity-" + n.key).textContent = u, e("registerError-" + n.key).textContent = s, 
+            e("registerError-" + n.key).hidden = !s, e("registerDate-" + n.key).textContent = n.ready ? r(n.date) : "—";
+          }
+          var y;
+          e("registerLastCheck").textContent = t.checkedAt ? `Last successful check of all three registers: ${y = t.checkedAt, 
+          y && Number.isFinite(Date.parse(y)) ? new Date(y).toLocaleString() : "—"}.` : "No successful check of all three registers yet.", 
+          e("registerStorageInfo").textContent = l ? "Checking browser storage…" : f ? t.saved ? "Loaded register data is saved in this browser." : t.sessionOnly || !1 === t.storageAvailable ? "Available for this session only; browser storage could not save the registers." : "Register data is available; saving to browser storage…" : "No complete register is loaded.", 
+          e("registerSourceHelp").textContent = g && !u ? "This package includes saved locations for its photos. Those results are kept until all three full registers are ready. New photos can use online address lookup when connected; roads and CFL require their registers." : u ? "Addresses, roads and CFL are calculated locally from the loaded registers. Source dates show when the data was published, independently of the last update check." : c ? "When the address register is missing, individual addresses can be requested from Geoportail. Roads and CFL require their registers; they have no per-photo online fallback." : "Online lookups are unavailable while offline. Loaded registers remain usable; missing registers will be checked after reconnection.", 
+          e("registerUpdateError").textContent = t.updateError || "", e("registerUpdateError").hidden = !t.updateError;
+          const v = e("exportRegisterHTML");
+          if (v && (v.disabled = !1), t.revision && n !== t.revision || void 0 !== t.lookupEpoch && a !== t.lookupEpoch) {
             H();
             for (const e of i.photos) if (e.hasGPS) {
               if (e.packageResults && !(t.addressReady && t.roadReady && t.railReady)) continue;
               e.addressStatus = "idle", e.addressError = "";
             }
-            S(), z(), Re();
+            k(), O(), Re();
           }
         }
-        window.SSFMapLoadFailed = ze, e("fileInput").accept = X;
+        window.SSFMapLoadFailed = Oe, e("fileInput").accept = X;
         for (const t of [ "openPhotos", "choosePhotos" ]) e(t).addEventListener("click", () => {
           Ee();
         });
@@ -6311,7 +6610,7 @@
           e.target.files.length && Pe(e.target.files);
         }), e("folderViewer").addEventListener("click", function() {
           if (++Q, B.pending) return void ce(!0);
-          if (B.active) return void ke();
+          if (B.active) return void Se();
           const t = p();
           if (i.busy || !t) return;
           clearTimeout(y), e("toast").hidden = !0;
@@ -6322,7 +6621,7 @@
             dismissPrompt: null,
             dismissPicker: null
           };
-          B.pending = n, de(), le(`Select the source folder of “${t.file.name}”…`), Se(n).catch(e => {
+          B.pending = n, de(), le(`Select the source folder of “${t.file.name}”…`), ke(n).catch(e => {
             if (ie(n)) if (ce(), "AbortError" === e.name) v("Folder selection cancelled. Your photo selection is unchanged."); else {
               console.warn("Folder viewer:", e);
               const t = "NotAllowedError" === e.name ? "Folder read access was refused. Your photo selection is unchanged." : "SecurityError" === e.name ? "The browser blocked folder access. Use a secure page (HTTPS) and select the folder with the button. Normal photo import remains available." : e.message || "The folder could not be read. Your photo selection is unchanged.";
@@ -6335,7 +6634,7 @@
           for (const n of i.photos) {
             const a = n.address || {}, r = C(n);
             (r.length ? r : [ null ]).forEach((i, s) => {
-              const l = [ n.id, n.file.name, n.file.webkitRelativePath || "", n.status, n.latitude, n.longitude, n.xLuref, n.yLuref, n.heading, n.headingRef, n.altitude, n.cameraTime, a.formatted, a.number, a.street, a.postalCode, a.locality, a.country, a.distance, n.road?.name || n.road?.formatted, n.road?.number, n.road?.classLabel || n.road?.classCode, n.road?.distance, n.road?.lon, n.road?.lat, i?.lineId, i?.name, i?.distance, i && Number.isFinite(i.pk) ? x(i.pk) : "", i?.pk, i?.lon, i?.lat, i?.status, i?.routeId, i?.sourceDate, i?.projectionKind, i?.distanceMethod, n.hasGPS ? n.railStatus || "pending" : "no-gps", 250, i ? s + 1 : "", r.length, n.addressStatus, n.addressSource, o.addressesDate, o.roadsDate, [ n.error, n.addressError, n.railError, i ? M(i) : "no-nearby" === n.railStatus ? "No CFL line within 250 m in the available register." : "", i ? F(i) : "" ].filter(Boolean).join(" · ") ];
+              const l = [ n.id, n.file.name, n.file.webkitRelativePath || "", n.status, n.latitude, n.longitude, n.xLuref, n.yLuref, n.heading, n.headingRef, n.altitude, n.cameraTime, a.formatted, a.number, a.street, a.postalCode, a.locality, a.country, a.distance, n.road?.name || n.road?.formatted, n.road?.number, n.road?.classLabel || n.road?.classCode, n.road?.distance, n.road?.lon, n.road?.lat, i?.lineId, i?.name, i?.distance, i && Number.isFinite(i.pk) ? x(i.pk) : "", i?.pk, i?.lon, i?.lat, i?.status, i?.routeId, i?.sourceDate, i?.projectionKind, i?.distanceMethod, n.hasGPS ? n.railStatus || "pending" : "no-gps", 250, i ? s + 1 : "", r.length, n.addressStatus, n.addressSource, o.addressesDate, o.roadsDate, [ n.error, n.addressError, n.railError, i ? F(i) : "no-nearby" === n.railStatus ? "No CFL line within 250 m in the available register." : "", i ? M(i) : "" ].filter(Boolean).join(" · ") ];
               e.push(l.map(t.csvCell).join(","));
             });
           }
@@ -6345,10 +6644,10 @@
           r.href = a, r.download = `SnapShotFinder-${(new Date).toISOString().slice(0, 10)}.csv`, 
           document.body.appendChild(r), r.click(), r.remove(), setTimeout(() => URL.revokeObjectURL(a), 1e3), 
           v(i.geocoder ? "CSV exported; searches in progress are marked as pending." : "CSV exported: one record per photo/CFL line, including photos with no nearby CFL line.");
-        }), e("previousPhoto").addEventListener("click", () => V(-1)), e("nextPhoto").addEventListener("click", () => V(1)), 
+        }), e("previousPhoto").addEventListener("click", () => U(-1)), e("nextPhoto").addEventListener("click", () => U(1)), 
         e("tableBody").addEventListener("click", e => {
           const t = e.target.closest("tr[data-id]");
-          t && O(Number(t.dataset.id));
+          t && z(Number(t.dataset.id));
         }), e("gpsTab").addEventListener("click", () => $("gps")), e("addressTab").addEventListener("click", () => $("address")), 
         e("timelineTab").addEventListener("click", () => $("timeline"));
         for (const t of [ "gps", "address", "timeline" ]) e(t + "Tab").addEventListener("keydown", n => {
@@ -6358,9 +6657,15 @@
           $(o[r]), e(o[r] + "Tab").focus();
         });
         e("filterPhotos").addEventListener("input", e => {
-          i.filter = e.target.value.trim(), S();
+          i.filter = e.target.value.trim(), k();
         }), e("updateRegisters").addEventListener("click", () => {
+          n.refresh(!1);
+        }), e("forceUpdateRegisters").addEventListener("click", () => {
           n.refresh(!0);
+        }), e("registerDetailsToggle").addEventListener("click", () => {
+          const t = e("registerDetails"), n = t.hidden;
+          t.hidden = !n, e("registerDetailsToggle").setAttribute("aria-expanded", String(n)), 
+          e("registerDetailsToggle").textContent = n ? "Hide details" : "Details";
         }), e("exportRegisterHTML")?.addEventListener("click", () => {
           n.exportHTML().catch(() => b("The HTML download could not be prepared. Please try again."));
         }), e("linkMaps").addEventListener("change", Be), e("helpButton").addEventListener("click", () => e("helpDialog").showModal()), 
@@ -6383,7 +6688,7 @@
         })), document.addEventListener("keydown", e => {
           const t = e.target;
           document.querySelector("dialog[open]") || t.closest("input,select,textarea,[role=tablist],.map,[contenteditable=true]") || ("ArrowLeft" !== e.key && "ArrowRight" !== e.key || (e.preventDefault(), 
-          V("ArrowLeft" === e.key ? -1 : 1)), "Escape" === e.key && (B.pending && ce(!0), 
+          U("ArrowLeft" === e.key ? -1 : 1)), "Escape" === e.key && (B.pending && ce(!0), 
           s.forEach(e => Xe(e, !1))));
         });
         let Ze = 0;
@@ -6523,7 +6828,7 @@
           document.hidden || tt();
         }), window.addEventListener("beforeprint", tt), window.addEventListener("afterprint", tt), 
         window.addEventListener("beforeunload", () => {
-          H(), I();
+          H(), D();
         });
         const ot = [ "status", "hasGPS", "latitude", "longitude", "xLuref", "yLuref", "altitude", "heading", "headingRef", "cameraTime", "captureTime", "orientation", "error", "address", "road", "rail", "rails", "railStatus", "railError", "addressStatus", "addressError", "addressSource", "registerRevision", "addressReady", "roadReady", "railReady" ], at = (e, t) => JSON.stringify([ e, t ]);
         function rt(e, t) {
@@ -6533,21 +6838,21 @@
           e.packageResults = !0, e;
         }
         window.SSFApp = {
-          version: "2.8.8",
-          getVisiblePhotos: g,
+          version: "2.8.9",
+          getVisiblePhotos: m,
           getSelected: p,
           getState: () => i,
           getMapRecords: () => [ ...i.maps.values() ],
           getRegisterState: () => ({
             ...o
           }),
-          selectPhoto: O,
+          selectPhoto: z,
           loadPackage: function(t) {
             if (1 !== t?.version || !Array.isArray(t.photos) || !t.photos.length) throw new Error("The photo package is invalid.");
             const n = new Set, a = t.photos.map(e => {
               if (!Number.isSafeInteger(e.id) || e.id < 1 || n.has(e.id)) throw new Error("The photo package has invalid photo numbers.");
               n.add(e.id);
-              const t = D(e.path);
+              const t = I(e.path);
               if (!t) throw new Error("The photo package contains an invalid path.");
               const o = String(e.fileName || t), a = ae(new File([], o, {
                 type: "image/jpeg",
@@ -6557,9 +6862,9 @@
               a;
             });
             xe(!1), i.photos = a, i.processed = a.length, i.packageView = t, "boolean" == typeof t.linkMaps && (e("linkMaps").checked = t.linkMaps), 
-            [ "gps", "address", "timeline" ].includes(t.tab) && $(t.tab), A(), k(), Ue(), O(n.has(t.selectedId) ? t.selectedId : a[0].id, !1), 
+            [ "gps", "address", "timeline" ].includes(t.tab) && $(t.tab), A(), S(), Ve(), z(n.has(t.selectedId) ? t.selectedId : a[0].id, !1), 
             b(`${a.length} packaged photos loaded. Saved location data remains available without a connection.`), 
-            Ke(o), Re(), m();
+            Ke(o), Re(), g();
           },
           stagePackage: function(e) {
             if (1 !== e?.version || !Array.isArray(e.photos) || !e.photos.length) throw new Error("The photo package is invalid.");
@@ -6567,7 +6872,7 @@
             for (const o of e.photos) {
               if (!Number.isSafeInteger(o.id) || o.id < 1 || t.has(o.id)) throw new Error("The photo package has invalid photo numbers.");
               t.add(o.id);
-              const e = D(o.path);
+              const e = I(o.path);
               if (!e || o.fileName !== e || !Number.isSafeInteger(o.size) || o.size < 1) throw new Error("The photo package contains an invalid photo record.");
               const a = at(e, o.size);
               if (n.has(a)) throw new Error("The photo package contains ambiguous filenames.");
@@ -6586,18 +6891,18 @@
             let n = 0, o = !1;
             for (const e of i.photos) {
               if (!e.packagePath || e.file.size) continue;
-              const a = (t.get(D(e.packagePath)) || []).filter(t => t.size && (!e.packageSize || t.size === e.packageSize));
+              const a = (t.get(I(e.packagePath)) || []).filter(t => t.size && (!e.packageSize || t.size === e.packageSize));
               1 === a.length && (e.file = a[0], n++, e.id === i.selected && (o = !0));
             }
-            return o && (I(), O(i.selected, !1)), de(), m(), n;
+            return o && (D(), z(i.selected, !1)), de(), g(), n;
           }
-        }, n.subscribe(Ke), A(), k();
+        }, n.subscribe(Ke), A(), S();
         let it = 0;
         const st = setInterval(() => {
           it++, (We() || it > 480) && clearInterval(st);
         }, 250);
         setTimeout(() => {
-          i.mapStarted || ze();
+          i.mapStarted || Oe();
         }, 15e3), window.addEventListener("online", () => {
           i.mapStarted || We();
         });
@@ -7245,7 +7550,7 @@
     <script id="ssf-viewer-builder">
       (() => {
         "use strict";
-        const e = "2.8.8", t = 65536, n = {
+        const e = "2.8.9", t = 65536, n = {
           "<": "\\u003c",
           ">": "\\u003e",
           "&": "\\u0026",
@@ -7265,7 +7570,7 @@
               const n = /<meta\b(?=[^>]*\bname="application-version")[^>]*\bcontent="([^"]+)"[^>]*>/.exec(t)?.[1];
               if (n !== e + "-slim") throw new Error("The viewer source belongs to a different SnapShotFinder version. Reopen the current program file and create the ZIP again.");
               let i = t;
-              return i = i.replace("<title>SnapShotFinder Slim — Photos into places</title>", "<title>viewer-SnapShotFinder 2.8.8 — Photo package</title>"), 
+              return i = i.replace("<title>SnapShotFinder Slim — Photos into places</title>", "<title>viewer-SnapShotFinder 2.8.9 — Photo package</title>"), 
               i = i.replace(/(<meta\b[^>]*\bname="application-version"[^>]*\bcontent="[^"]*)-slim(")/, "$1-viewer$2"), 
               i = i.replace(/(SnapShotFinder \d+\.\d+\.\d+) Slim ·/, "$1 Viewer ·"), i = i.replace("Slim · addresses, roads &amp; CFL", "Viewer · addresses, roads &amp; CFL"), 
               r = t, a = i, i;
