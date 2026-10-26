@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="color-scheme" content="light">
-    <meta name="application-version" content="2.8.6-slim">
+    <meta name="application-version" content="2.8.8-slim">
     <title>SnapShotFinder Slim — Photos into places</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%230c766e'/%3E%3Cpath d='M20 7a10 10 0 0 0-10 10c0 8 10 17 10 17s10-9 10-17A10 10 0 0 0 20 7' fill='white'/%3E%3Ccircle cx='20' cy='17' r='4' fill='%230c766e'/%3E%3C/svg%3E">
     <style>
@@ -2192,7 +2192,7 @@
           </div>
           <p id="zipSizeHelp" class="small muted">Includes JPG photos, viewer, saved locations and available map snapshots. 1 MB = 1,000,000 bytes. Your browser remembers this limit.</p>
           <label class="zip-auto-option" for="zipAutoOpen"><input id="zipAutoOpen" type="checkbox" checked="checked" aria-describedby="zipAutoOpenHelp"><strong>Open package photos automatically</strong></label>
-          <p id="zipAutoOpenHelp" class="small muted">Includes an extra copy of the JPGs and saved maps inside viewer.html, so the package opens without selecting photos. JPGs still sit beside viewer.html. The extra copy can require stronger photo compression at the same ZIP limit. Uncheck for a smaller viewer: extract the ZIP, then choose or drop its JPGs to restore saved locations. Your browser remembers this choice.</p>
+          <p id="zipAutoOpenHelp" class="small muted">Includes an extra copy of the JPGs and saved maps inside viewer-SnapShotFinder.html, so the package opens without selecting photos. JPGs still sit beside viewer-SnapShotFinder.html. The extra copy can require stronger photo compression at the same ZIP limit. Uncheck for a smaller viewer: extract the ZIP, then choose or drop its JPGs to restore saved locations. Your browser remembers this choice.</p>
           <p class="small muted">Photos are compressed and, only where necessary, resized. The originals stay unchanged. A mail server's limit for the entire message may require a smaller ZIP.</p>
           <p class="zip-form-error" id="zipFormError" role="alert" hidden></p>
           <div class="zip-dialog-footer">
@@ -2371,7 +2371,7 @@
     </main>
     <footer class="app-footer">
       <p>Photos stay on your device. While the address register loads, coordinates are sent to Geoportail for address lookup.<br>All three registers download in the background and are saved in this browser when possible. CSV exports contain location data.</p>
-      <p class="footer-status"><span class="status-dot" id="mapStatusDot"></span><span id="serviceStatus">Connecting to map services…</span><br>SnapShotFinder 2.8.6 Slim · Christian Dammé</p>
+      <p class="footer-status"><span class="status-dot" id="mapStatusDot"></span><span id="serviceStatus">Connecting to map services…</span><br>SnapShotFinder 2.8.8 Slim · Christian Dammé</p>
     </footer>
     <div class="drop-overlay" id="dropOverlay" hidden>
       <strong>Drop your photos here</strong>
@@ -2475,39 +2475,47 @@
     <script id="ssf-slim-export">
       (() => {
         "use strict";
-        const e = document.head.cloneNode(!0), t = e.querySelector("#ssf-viewer-data");
-        t && (t.textContent = "null");
-        const o = e.querySelector("title");
-        o && (o.textContent = "SnapShotFinder Slim — Photos into places");
-        const r = document.body.cloneNode(!0);
-        for (const e of r.querySelectorAll("script")) e.remove();
-        const n = e => e.cloneNode(!1).outerHTML.replace(/<\/[^>]+>$/, ""), s = "<!doctype html>" + n(document.documentElement) + e.outerHTML + n(document.body) + r.innerHTML, c = [ "ssf-slim-export", "ssf-core", "ssf-register-worker-source", "ssf-register-client", "snapshotAppScript", "screenCaptureScript", "tileSplitterScript", "ssf-package-assets", "ssf-viewer-builder", "ssf-zip-core", "ssf-map-snapshots", "ssf-viewer-runtime", "ssf-viewer-export", "ssf-source-capture" ];
-        let l, i, a = null;
-        const p = new Promise((e, t) => {
-          l = e, i = t;
+        const e = "2.8.8", t = document.head.querySelector('meta[name="application-version"]')?.content, o = document.head.cloneNode(!1);
+        for (const e of document.head.childNodes) {
+          const t = 1 === e.nodeType && "ssf-viewer-data" === e.id, n = e.cloneNode(!t);
+          t && (n.textContent = "null"), o.appendChild(n);
+        }
+        const n = o.querySelector('meta[name="application-version"]');
+        n && (n.content = e + "-slim");
+        const r = o.querySelector("title");
+        r && (r.textContent = "SnapShotFinder Slim — Photos into places");
+        const s = document.body.cloneNode(!0);
+        for (const e of s.querySelectorAll("script")) e.remove();
+        for (const e of s.querySelectorAll(".chip")) "Viewer · addresses, roads & CFL" === e.textContent && (e.textContent = "Slim · addresses, roads & CFL");
+        for (const e of s.querySelector(".footer-status")?.childNodes || []) 3 === e.nodeType && (e.textContent = e.textContent.replace("SnapShotFinder 2.8.8 Viewer ·", "SnapShotFinder 2.8.8 Slim ·"));
+        const c = e => e.cloneNode(!1).outerHTML.replace(/<\/[^>]+>$/, ""), i = "<!doctype html>" + c(document.documentElement) + o.outerHTML + c(document.body) + s.innerHTML, a = [ "ssf-slim-export", "ssf-core", "ssf-register-worker-source", "ssf-register-client", "snapshotAppScript", "screenCaptureScript", "tileSplitterScript", "ssf-package-assets", "ssf-viewer-builder", "ssf-zip-core", "ssf-map-snapshots", "ssf-viewer-runtime", "ssf-viewer-export", "ssf-source-capture" ];
+        let l, d, p = null;
+        const m = new Promise((e, t) => {
+          l = e, d = t;
         });
-        p.catch(() => {}), globalThis.SSFSlimCapture = function() {
-          if (null === a) try {
-            const e = c.map(e => {
+        m.catch(() => {}), globalThis.SSFSlimCapture = function() {
+          if (null === p) try {
+            if (![ e + "-slim", e + "-viewer" ].includes(t) || globalThis.SSFApp?.version !== e) throw new Error("The SnapShotFinder source and running program versions do not match. Reopen the current program file.");
+            const o = a.map(e => {
               const t = document.getElementById(e);
               if (!t || "SCRIPT" !== t.tagName || t.parentElement !== document.body || t.hasAttribute("src")) throw new Error("The clean program source is incomplete.");
               return t.outerHTML;
             });
-            a = s + e.join("") + '<script src="https://apiv4.geoportail.lu/apiv4loader.js" onerror="window.SSFMapLoadFailed &amp;&amp; window.SSFMapLoadFailed()"><\/script><\/body><\/html>\n', 
-            l(a);
+            p = i + o.join("") + '<script src="https://apiv4.geoportail.lu/apiv4loader.js" onerror="window.SSFMapLoadFailed &amp;&amp; window.SSFMapLoadFailed()"><\/script><\/body><\/html>\n', 
+            l(p);
           } catch (e) {
-            i(e);
+            d(e);
           }
         }, document.addEventListener("DOMContentLoaded", () => {
-          null === a && i(new Error("The clean program source could not be prepared."));
+          null === p && d(new Error("The clean program source could not be prepared."));
         }, {
           once: !0
-        }), globalThis.SSFSlimHTML = () => p, globalThis.SSFSlimExport = async function() {
-          const e = URL.createObjectURL(new Blob([ await globalThis.SSFSlimHTML() ], {
+        }), globalThis.SSFSlimHTML = () => m, globalThis.SSFSlimExport = async function() {
+          const t = URL.createObjectURL(new Blob([ await globalThis.SSFSlimHTML() ], {
             type: "text/html;charset=utf-8"
-          })), t = document.createElement("a");
-          t.href = e, t.download = "SnapShotFinder-2.8.6-Slim.html", document.body.appendChild(t), 
-          t.click(), t.remove(), setTimeout(() => URL.revokeObjectURL(e), 6e4);
+          })), o = document.createElement("a");
+          o.href = t, o.download = `SnapShotFinder-${e}-Slim.html`, document.body.appendChild(o), 
+          o.click(), o.remove(), setTimeout(() => URL.revokeObjectURL(t), 6e4);
         };
       })();
     </script>
@@ -5003,7 +5011,7 @@
         function j(t) {
           N.suspend(), e("photoPreview").hidden = !0;
           const n = document.createElement("p");
-          n.textContent = `“${D(t.packagePath)}” could not be opened. Fully extract the ZIP, then open viewer.html from the extracted folder with its JPG files. If the files are elsewhere, choose them below.`;
+          n.textContent = `“${D(t.packagePath)}” could not be opened. Fully extract the ZIP, then open viewer-SnapShotFinder.html from the extracted folder with its JPG files. If the files are elsewhere, choose them below.`;
           const o = document.createElement("button");
           o.type = "button", o.id = "packagePhotoAttach", o.textContent = "Choose packaged JPGs", 
           o.addEventListener("click", () => m("ssf:package-pick")), e("previewError").replaceChildren(n, o), 
@@ -6525,6 +6533,7 @@
           e.packageResults = !0, e;
         }
         window.SSFApp = {
+          version: "2.8.8",
           getVisiblePhotos: g,
           getSelected: p,
           getState: () => i,
@@ -7236,103 +7245,96 @@
     <script id="ssf-viewer-builder">
       (() => {
         "use strict";
-        const e = 65536, t = {
+        const e = "2.8.8", t = 65536, n = {
           "<": "\\u003c",
           ">": "\\u003e",
           "&": "\\u0026",
           "\u2028": "\\u2028",
           "\u2029": "\\u2029"
-        }, i = e => e.replace(/[<>&\u2028\u2029]/g, e => t[e]), n = () => performance.now();
-        let o = null, r = null;
+        }, i = e => e.replace(/[<>&\u2028\u2029]/g, e => n[e]), o = () => performance.now();
+        let r = null, a = null;
         ("undefined" == typeof window ? globalThis : window).SSFViewerBuilder = Object.freeze({
-          build: async function(t, a, {signal: s} = {}) {
-            const l = () => {
+          build: async function(n, l, {signal: s} = {}) {
+            const c = () => {
               if (s?.aborted) throw new DOMException("Viewer creation cancelled.", "AbortError");
             };
-            if (l(), "string" != typeof t) throw new Error("The viewer template is missing.");
-            const c = function(e) {
-              if (e === o) return r;
-              let t = e;
-              function i(e) {
-                let i = 0;
-                if (t = t.replace(e, () => (i++, "")), 1 !== i) throw new Error("The recipient viewer template is incomplete.");
-              }
-              for (const e of [ "ssf-slim-export", "ssf-source-capture", "ssf-viewer-builder", "ssf-zip-core", "ssf-viewer-export" ]) i(new RegExp('<script\\b[^>]*\\bid="' + e + '"[^>]*>[\\s\\S]*?<\\/script>', "g"));
-              return i(/<button\b[^>]*\bid="exportRegisterHTML"[^>]*>[\s\S]*?<\/button>/g), i(/<span\b[^>]*\bclass="zip-actions"[^>]*>[\s\S]*?<\/span>/g), 
-              i(/<section\b[^>]*\bid="zipStatus"[^>]*>[\s\S]*?<\/section>/g), i(/<dialog\b[^>]*\bid="zipDialog"[^>]*>[\s\S]*?<\/dialog>/g), 
-              t = t.replace("<title>SnapShotFinder Slim — Photos into places</title>", "<title>SnapShotFinder Viewer — Photo package</title>"), 
-              t = t.replace(/(<meta\b[^>]*\bname="application-version"[^>]*\bcontent="[^"]*)-slim(")/, "$1-viewer$2"), 
-              t = t.replace(/(SnapShotFinder \d+\.\d+\.\d+) Slim ·/, "$1 Viewer ·"), t = t.replace("Slim · addresses, roads &amp; CFL", "Viewer · addresses, roads &amp; CFL"), 
-              t = t.replace("This Slim HTML contains the program but no address, road or CFL registers.", "This viewer can restore the saved locations supplied with the photos. Complete address, road and CFL registers are downloaded separately."), 
-              t = t.replace("<p>Download Slim HTML always creates another small program file with no registers, photos or browser data embedded. The recipient loads their own register copies. Saving the program does not depend on a finished register download.</p>", "<p>To share this photo package, forward the complete ZIP or its extracted folder. Keep viewer.html beside the JPGs and any maps folder.</p>"), 
-              t = t.replace("<strong>Download Slim HTML</strong> includes the calculation code and source links; the register data is downloaded again by the recipient.", "This viewer includes the calculation code and source links; each recipient can download the registers."), 
-              o = e, r = t, t;
-            }(t), d = /(<script\b[^>]*\bid="ssf-viewer-data"[^>]*>)[\s\S]*?(<\/script>)/.exec(c);
-            if (!d) throw new Error("The viewer template is missing.");
-            const p = d.index + d[1].length, h = d.index + d[0].length - d[2].length, w = [ new Blob([ c.slice(0, p) ]) ];
-            let u = [], f = 0, g = n() + 8;
-            const b = new Set;
-            function m() {
-              f && (w.push(new Blob(u)), u = [], f = 0);
+            if (c(), "string" != typeof n) throw new Error("The viewer template is missing.");
+            if (l?.appVersion !== e) throw new Error("The photo package and viewer program versions do not match. Reopen the current SnapShotFinder file and create the ZIP again.");
+            const p = function(t) {
+              if (t === r) return a;
+              const n = /<meta\b(?=[^>]*\bname="application-version")[^>]*\bcontent="([^"]+)"[^>]*>/.exec(t)?.[1];
+              if (n !== e + "-slim") throw new Error("The viewer source belongs to a different SnapShotFinder version. Reopen the current program file and create the ZIP again.");
+              let i = t;
+              return i = i.replace("<title>SnapShotFinder Slim — Photos into places</title>", "<title>viewer-SnapShotFinder 2.8.8 — Photo package</title>"), 
+              i = i.replace(/(<meta\b[^>]*\bname="application-version"[^>]*\bcontent="[^"]*)-slim(")/, "$1-viewer$2"), 
+              i = i.replace(/(SnapShotFinder \d+\.\d+\.\d+) Slim ·/, "$1 Viewer ·"), i = i.replace("Slim · addresses, roads &amp; CFL", "Viewer · addresses, roads &amp; CFL"), 
+              r = t, a = i, i;
+            }(n), f = /(<script\b[^>]*\bid="ssf-viewer-data"[^>]*>)[\s\S]*?(<\/script>)/.exec(p);
+            if (!f) throw new Error("The viewer template is missing.");
+            const h = f.index + f[1].length, u = f.index + f[0].length - f[2].length, w = [ new Blob([ p.slice(0, h) ]) ];
+            let d = [], g = 0, b = o() + 8;
+            const m = new Set;
+            function S() {
+              g && (w.push(new Blob(d)), d = [], g = 0);
             }
-            function S(t) {
-              t && (f + t.length > e && m(), t.length >= e ? w.push(new Blob([ t ])) : (u.push(t), 
-              f += t.length));
+            function y(e) {
+              e && (g + e.length > t && S(), e.length >= t ? w.push(new Blob([ e ])) : (d.push(e), 
+              g += e.length));
             }
-            async function y(e = !1) {
-              l(), (e || n() >= g) && (m(), await new Promise(e => setTimeout(e, 0)), l(), g = n() + 8);
+            async function v(e = !1) {
+              c(), (e || o() >= b) && (S(), await new Promise(e => setTimeout(e, 0)), c(), b = o() + 8);
             }
-            async function v(t) {
-              S('"');
-              for (let n = 0; n < t.length; ) {
-                let o = Math.min(t.length, n + e);
-                if (o < t.length) {
-                  const e = t.charCodeAt(o - 1), i = t.charCodeAt(o);
-                  e >= 55296 && e <= 56319 && i >= 56320 && i <= 57343 && o--;
+            async function E(e) {
+              y('"');
+              for (let n = 0; n < e.length; ) {
+                let o = Math.min(e.length, n + t);
+                if (o < e.length) {
+                  const t = e.charCodeAt(o - 1), n = e.charCodeAt(o);
+                  t >= 55296 && t <= 56319 && n >= 56320 && n <= 57343 && o--;
                 }
-                S(i(JSON.stringify(t.slice(n, o)).slice(1, -1))), n = o, await y(t.length > e);
+                y(i(JSON.stringify(e.slice(n, o)).slice(1, -1))), n = o, await v(e.length > t);
               }
-              S('"');
+              y('"');
             }
             function T(e, t) {
               return null === e || "object" != typeof e && "bigint" != typeof e || "function" != typeof e.toJSON || (e = e.toJSON(t)), 
               (e instanceof Number || e instanceof String || e instanceof Boolean) && (e = e.valueOf()), 
               e;
             }
-            const x = e => void 0 === e || "function" == typeof e || "symbol" == typeof e, E = T(a, "");
-            if (x(E)) throw new Error("The photo package data is invalid.");
-            return await async function e(t, i, n) {
-              if (l(), null === t) return void S("null");
+            const F = e => void 0 === e || "function" == typeof e || "symbol" == typeof e, O = T(l, "");
+            if (F(O)) throw new Error("The photo package data is invalid.");
+            return await async function e(t, n, i) {
+              if (c(), null === t) return void y("null");
               const o = typeof t;
               if ("string" !== o) if ("number" !== o) if ("boolean" !== o) {
                 if ("bigint" === o) throw new TypeError("BigInt cannot be included in JSON package data.");
                 if ("object" !== o) throw new Error("The photo package data is invalid.");
-                if (b.has(t)) throw new TypeError("Circular package data cannot be included in JSON.");
-                b.add(t);
+                if (m.has(t)) throw new TypeError("Circular package data cannot be included in JSON.");
+                m.add(t);
                 try {
                   if (Array.isArray(t)) {
-                    S("[");
+                    y("[");
                     const o = t.length;
                     for (let r = 0; r < o; r++) {
-                      r && S(",");
+                      r && y(",");
                       const o = T(t[r], String(r));
-                      x(o) ? S("null") : await e(o, String(r), n + 1), await y(1 === n && ("photos" === i || "maps" === i));
+                      F(o) ? y("null") : await e(o, String(r), i + 1), await v(1 === i && ("photos" === n || "maps" === n));
                     }
-                    S("]");
+                    y("]");
                   } else {
-                    S("{");
-                    let i = !0;
+                    y("{");
+                    let n = !0;
                     for (const o of Object.keys(t)) {
                       const r = T(t[o], o);
-                      x(r) || (i || S(","), i = !1, await v(o), S(":"), await e(r, o, n + 1), await y());
+                      F(r) || (n || y(","), n = !1, await E(o), y(":"), await e(r, o, i + 1), await v());
                     }
-                    S("}");
+                    y("}");
                   }
                 } finally {
-                  b.delete(t);
+                  m.delete(t);
                 }
-              } else S(t ? "true" : "false"); else S(Number.isFinite(t) ? String(t) : "null"); else await v(t);
-            }(E, "", 0), m(), w.push(new Blob([ c.slice(h) ])), await y(!0), new Blob(w, {
+              } else y(t ? "true" : "false"); else y(Number.isFinite(t) ? String(t) : "null"); else await E(t);
+            }(O, "", 0), S(), w.push(new Blob([ p.slice(u) ])), await v(!0), new Blob(w, {
               type: "text/html;charset=utf-8"
             });
           }
@@ -7636,7 +7638,7 @@
             if (!Number.isFinite(n) || n <= 0) throw r("The selected ZIP limit leaves no space for photos.", "SSF_BUDGET");
             o(i.signal);
             const a = new Set, l = [], h = e.map((t, e) => function(t, e, n) {
-              const i = String(t.file?.name || t.name || "Photo").split(/[\\/]/).pop(), a = Array.from(i.replace(/\.[^.]*$/, "").replace(/[\x00-\x1f<>:"|?*]/g, "_").replace(/[. ]+$/g, "") || "Photo").slice(0, 110).join(""), o = Number.isSafeInteger(t.id) && t.id >= 0 ? t.id : e + 1, s = String(o).padStart(4, "0") + "_" + a;
+              const i = String(t.originalName || t.file?.name || t.name || "Photo").split(/[\\/]/).pop(), a = Array.from(i.replace(/\.[^.]*$/, "").replace(/[\x00-\x1f<>:"|?*]/g, "_").replace(/[. ]+$/g, "") || "Photo").slice(0, 110).join(""), o = Number.isSafeInteger(t.id) && t.id >= 0 ? t.id : e + 1, s = String(o).padStart(4, "0") + "_" + a;
               let r = s + ".jpg", l = 2;
               for (;n.has(r.toLowerCase()); ) r = s + "_" + l++ + ".jpg";
               return n.add(r.toLowerCase()), r;
@@ -8213,7 +8215,7 @@
         const a = () => !0 === o?.autoOpen;
         function i() {
           const i = e("packageNotice");
-          if (e("packageNoticeTitle").textContent = n ? "Photo package unavailable" : "Photo package", 
+          if (e("packageNoticeTitle").textContent = n ? "Photo package unavailable" : `viewer-SnapShotFinder ${t.version}`, 
           i.dataset.error = String(!!n), n) return i.hidden = !1, e("packageNoticeText").textContent = n, 
           void (e("packageOpenPhotos").hidden = !0);
           if (!o) return void (i.hidden = !0);
@@ -8310,44 +8312,44 @@
     <script id="ssf-viewer-export">
       (() => {
         "use strict";
-        const e = e => document.getElementById(e), t = window.SSFApp, n = window.SSFZipCore, a = window.SSFPackageAssets, i = "ssf.zip.maxBytes.v1", o = "ssf.zip.autoOpen.v1", s = 1e6, r = "SnapShotFinder - Viewer + Photos", d = e => e.map(e => ({
+        const e = e => document.getElementById(e), t = window.SSFApp, n = window.SSFZipCore, a = window.SSFPackageAssets, i = t.version, o = "viewer-SnapShotFinder.html", s = "ssf.zip.maxBytes.v1", r = "ssf.zip.autoOpen.v1", d = 1e6, l = "SnapShotFinder - Viewer + Photos", h = e => e.map(e => ({
           ...e,
-          name: r + "/" + e.name
-        })), l = () => new Promise(e => setTimeout(e, 0));
-        let h = 0, p = !0, c = null, g = null, m = null;
+          name: l + "/" + e.name
+        })), p = () => new Promise(e => setTimeout(e, 0));
+        let c = 0, g = !0, m = null, u = null, w = null;
         try {
-          const e = Number(localStorage.getItem(i));
-          Number.isSafeInteger(e) && e >= 1e5 && e <= 1e9 && (h = e);
+          const e = Number(localStorage.getItem(s));
+          Number.isSafeInteger(e) && e >= 1e5 && e <= 1e9 && (c = e);
         } catch (e) {}
         try {
-          const e = localStorage.getItem(o);
-          "true" !== e && "false" !== e || (p = "true" === e);
+          const e = localStorage.getItem(r);
+          "true" !== e && "false" !== e || (g = "true" === e);
         } catch (e) {}
-        const u = e => (e / s).toLocaleString(void 0, {
+        const S = e => (e / d).toLocaleString(void 0, {
           maximumFractionDigits: 2
-        }) + " MB", w = e => void 0 === e ? void 0 : JSON.parse(JSON.stringify(e));
+        }) + " MB", b = e => void 0 === e ? void 0 : JSON.parse(JSON.stringify(e));
         function f() {
-          e("zipSettings").textContent = h ? u(h) + " ▾" : "Set size";
+          e("zipSettings").textContent = c ? S(c) + " ▾" : "Set size";
         }
-        function b() {
-          e("exportZip").disabled = !!c || t.getState().busy || !t.getVisiblePhotos().length, 
-          e("zipSettings").disabled = !!c;
+        function v() {
+          e("exportZip").disabled = !!m || t.getState().busy || !t.getVisiblePhotos().length, 
+          e("zipSettings").disabled = !!m;
         }
-        function v(e) {
+        function P(e) {
           if (e.aborted) throw new DOMException("Export cancelled.", "AbortError");
         }
-        function P(t, n = "", a = !1) {
+        function z(t, n = "", a = !1) {
           e("zipStatus").hidden = !1, e("zipStatus").dataset.error = String(a), e("zipMessage").textContent = t, 
           e("zipDetails").textContent = n;
         }
-        function S(n = null) {
-          g?.maps?.dispose?.(), g = n, e("zipLimitMB").value = h ? String(h / s) : "", e("zipAutoOpen").checked = n ? n.autoOpen : p;
+        function k(n = null) {
+          u?.maps?.dispose?.(), u = n, e("zipLimitMB").value = c ? String(c / d) : "", e("zipAutoOpen").checked = n ? n.autoOpen : g;
           const a = n?.photos.length ?? t.getVisiblePhotos().length;
           e("zipSelectionInfo").textContent = n ? `${a} filtered photo${1 === a ? "" : "s"} selected. The current map views have been frozen.` : "Set the limit used by the ZIP button. Only photos admitted by the current table filter are included.", 
           e("zipConfirm").textContent = n ? "Create ZIP" : "Save settings", e("zipFormError").hidden = !0, 
           e("zipDialog").showModal(), e("zipLimitMB").focus();
         }
-        function z(e, n) {
+        function F(e, n) {
           const a = {
             id: e.id,
             fileName: n.name,
@@ -8357,32 +8359,32 @@
             width: n.width || 0,
             height: n.height || 0
           };
-          for (const n of t.packageFields) void 0 !== e[n] && (a[n] = w(e[n]));
+          for (const n of t.packageFields) void 0 !== e[n] && (a[n] = b(e[n]));
           return a.orientation = 1, [ "loading", "queued", "idle" ].includes(a.addressStatus) && (a.addressStatus = a.address ? "partial" : "pending"), 
           a;
         }
-        e("zipSettings").addEventListener("click", () => S()), e("zipCancelDialog").addEventListener("click", function() {
-          g?.maps?.dispose?.(), g = null, e("zipDialog").close();
+        e("zipSettings").addEventListener("click", () => k()), e("zipCancelDialog").addEventListener("click", function() {
+          u?.maps?.dispose?.(), u = null, e("zipDialog").close();
         }), e("zipDialog").addEventListener("cancel", () => {
-          g?.maps?.dispose?.(), g = null;
+          u?.maps?.dispose?.(), u = null;
         }), e("zipForm").addEventListener("submit", t => {
           t.preventDefault();
-          const n = Number(e("zipLimitMB").value), a = Math.floor(n * s);
+          const n = Number(e("zipLimitMB").value), a = Math.floor(n * d);
           if (!Number.isFinite(n) || a < 1e5 || a > 1e9) return e("zipFormError").textContent = "Enter a ZIP limit between 0.1 and 1,000 MB.", 
           void (e("zipFormError").hidden = !1);
-          h = a;
+          c = a;
           try {
-            localStorage.setItem(i, String(h));
+            localStorage.setItem(s, String(c));
           } catch (e) {}
-          p = e("zipAutoOpen").checked;
+          g = e("zipAutoOpen").checked;
           try {
-            localStorage.setItem(o, String(p));
+            localStorage.setItem(r, String(g));
           } catch (e) {}
           f();
-          const r = g;
-          g = null, e("zipDialog").close(), r && (r.autoOpen = p, I(r));
+          const i = u;
+          u = null, e("zipDialog").close(), i && (i.autoOpen = g, O(i));
         }), e("exportZip").addEventListener("click", () => {
-          if (c) return;
+          if (m) return;
           const n = function() {
             const n = t.getVisiblePhotos().slice();
             if (!n.length || t.getState().busy) return null;
@@ -8408,7 +8410,7 @@
                 embedded: e.embedded,
                 originalName: e.originalName || e.file.name
               };
-              for (const a of t.packageFields) void 0 !== e[a] && (n[a] = w(e[a]));
+              for (const a of t.packageFields) void 0 !== e[a] && (n[a] = b(e[a]));
               return n;
             }), o = [], s = [];
             for (const e of t.getState().packageView?.maps || []) {
@@ -8416,7 +8418,7 @@
               const t = document.querySelector('.ssf-package-map[data-map-id="' + e.id + '"]'), n = t?.querySelector("img");
               if (!t || t.hidden || t.getBoundingClientRect().width <= 0 || !n?.complete || !n.naturalWidth) continue;
               const {embedded: a, ...i} = e, r = {
-                record: w(i),
+                record: b(i),
                 canvas: null
               };
               let d;
@@ -8445,200 +8447,198 @@
               maps: a,
               savedMaps: o,
               savedMapWarnings: s,
-              autoOpen: p,
+              autoOpen: g,
               createdAt: (new Date).toISOString(),
               selectedId: t.getSelected()?.id,
               tab: t.getState().tab,
-              linkMaps: e("linkMaps").checked,
-              registerInfo: w(t.getRegisterState())
+              linkMaps: e("linkMaps").checked
             };
           }();
-          n && (h ? I(n) : S(n));
-        }), e("zipCancel").addEventListener("click", () => c?.abort()), window.addEventListener("ssf:change", b);
-        const k = e => `SNAPSHOTFINDER PHOTO PACKAGE — VERSION 2.8.6\n\nDE\n${e ? "1. viewer.html im Browser öffnen. Die Paketfotos, gespeicherten Ortsangaben und vorhandenen Kartenbilder werden automatisch angezeigt.\n2. Das gesamte ZIP entpacken, wenn die einzelnen JPG-Fotos benötigt werden. Im Ordner „SnapShotFinder - Viewer + Photos“ liegen viewer.html und die JPG-Fotos direkt nebeneinander; Kartenbilder liegen zusätzlich im Unterordner maps.\nDie gleichen komprimierten JPGs und verfügbaren Kartenbilder sind zusätzlich als Bilddaten in viewer.html enthalten. Deshalb funktioniert die Fotoanzeige auch dann, wenn ein ZIP-Programm nur viewer.html an den Browser weitergibt. Es müssen keine Fotos aus der ZIP-Ansicht in den Browser gezogen werden." : "1. Das gesamte ZIP entpacken. Im Ordner „SnapShotFinder - Viewer + Photos“ liegen viewer.html und die JPG-Fotos direkt nebeneinander.\n2. viewer.html im Browser öffnen. Es werden noch keine Fotos geladen.\n3. Die JPG-Fotos markieren und in den Viewer ziehen, oder mit Open photos auswählen. Die JPG-Dateinamen unverändert lassen, damit die gespeicherten Ortsangaben zugeordnet werden können.\nDie Fotos werden als einzelne JPG-Dateien mitgeliefert und sind nicht in viewer.html eingebettet. Der Viewer enthält die zugehörigen gespeicherten Foto- und Ortsangaben. Den Unterordner maps bei viewer.html lassen, damit die gespeicherten Kartenbilder verfügbar bleiben."}\nAdressen, Straßen und CFL-Angaben stehen ohne Internet zur Verfügung, soweit sie beim Export vorhanden waren. Online werden die normalen Karten und vollständigen Register nachgeladen. Die gespeicherten Karten zeigen die beim Export sichtbaren Ausschnitte.\nDieser Viewer bietet Fotoanzeige, Filter, Karten, Folder viewer sowie CSV- und Screenshot-/PDF-Ausgabe. Er erzeugt keine weiteren HTML- oder ZIP-Pakete. Zum Weitergeben den kompletten Originalordner einschließlich Fotos und maps oder das Original-ZIP kopieren. Neue Fotopakete werden im vollständigen SnapShotFinder erstellt.\nAlle Bildumwandlungen bei der Paketerstellung erfolgen lokal im Browser. Die Originaldateien bleiben unverändert.\n\nEN\n${e ? "1. Open viewer.html in a browser. The packaged photos, saved locations and available map snapshots open automatically.\n2. Extract the complete ZIP when you need the separate JPG files. In SnapShotFinder - Viewer + Photos, viewer.html and the JPG photos sit beside each other; map images also appear in the maps subfolder.\nThe same compressed JPGs and available map snapshots are also included as image data inside viewer.html. Photos therefore remain available when a ZIP application passes only viewer.html to the browser. There is no need to drag photos from the ZIP view into the browser." : "1. Extract the complete ZIP. In SnapShotFinder - Viewer + Photos, viewer.html and the JPG photos sit beside each other.\n2. Open viewer.html in a browser. No photos are loaded automatically.\n3. Select the JPG files and drag them into the viewer, or use Open photos. Keep their filenames unchanged so the saved locations can be matched.\nPhotos are ordinary separate JPGs, not embedded in viewer.html. The viewer contains their saved photo and location data. Keep any maps subfolder beside viewer.html for the saved map images."}\nSaved addresses, roads and CFL information are available without an Internet connection, where present at export time. Online services load interactive maps and full registers. The saved map images show the views visible when the package was created.\nThis viewer includes photo viewing, filters, maps, Folder viewer, CSV and screenshot/PDF output. It does not create further HTML or ZIP packages. To pass the package on, copy its complete original folder, including the photos and maps, or the original ZIP. Use the full SnapShotFinder to create new photo packages.\nAll photo conversion during package creation takes place locally in the browser. The source files are unchanged.\n`;
-        async function I(i) {
-          if (c) return;
-          const o = new AbortController, s = o.signal;
-          c = o, e("zipDownload").hidden = !0, e("zipCancel").hidden = !1, e("zipProgress").hidden = !1, 
-          e("zipProgress").value = 0, e("zipAttach").hidden = !0, b(), P(`Preparing ${i.photos.length} photos…`, `Complete ZIP limit: ${u(h)}.`);
+          n && (c ? O(n) : k(n));
+        }), e("zipCancel").addEventListener("click", () => m?.abort()), window.addEventListener("ssf:change", v);
+        const I = e => `SNAPSHOTFINDER PHOTO PACKAGE — VERSION ${i}\n\nDE\n${e ? "1. viewer-SnapShotFinder.html im Browser öffnen. Die Paketfotos, gespeicherten Ortsangaben und vorhandenen Kartenbilder werden automatisch angezeigt.\n2. Das gesamte ZIP entpacken, wenn die einzelnen JPG-Fotos benötigt werden. Im Ordner „SnapShotFinder - Viewer + Photos“ liegen viewer-SnapShotFinder.html und die JPG-Fotos direkt nebeneinander; Kartenbilder liegen zusätzlich im Unterordner maps.\nDie gleichen komprimierten JPGs und verfügbaren Kartenbilder sind zusätzlich als Bilddaten in viewer-SnapShotFinder.html enthalten. Deshalb funktioniert die Fotoanzeige auch dann, wenn ein ZIP-Programm nur viewer-SnapShotFinder.html an den Browser weitergibt. Es müssen keine Fotos aus der ZIP-Ansicht in den Browser gezogen werden." : "1. Das gesamte ZIP entpacken. Im Ordner „SnapShotFinder - Viewer + Photos“ liegen viewer-SnapShotFinder.html und die JPG-Fotos direkt nebeneinander.\n2. viewer-SnapShotFinder.html im Browser öffnen. Es werden noch keine Fotos geladen.\n3. Die JPG-Fotos markieren und in den Viewer ziehen, oder mit Open photos auswählen. Die JPG-Dateinamen unverändert lassen, damit die gespeicherten Ortsangaben zugeordnet werden können.\nDie Fotos werden als einzelne JPG-Dateien mitgeliefert und sind nicht in viewer-SnapShotFinder.html eingebettet. Der Viewer enthält die zugehörigen gespeicherten Foto- und Ortsangaben. Den Unterordner maps bei viewer-SnapShotFinder.html lassen, damit die gespeicherten Kartenbilder verfügbar bleiben."}\nAdressen, Straßen und CFL-Angaben stehen ohne Internet zur Verfügung, soweit sie beim Export vorhanden waren. Online werden die normalen Karten und vollständigen Register nachgeladen. Die gespeicherten Karten zeigen die beim Export sichtbaren Ausschnitte.\nDieser Viewer enthält das vollständige aktuelle SnapShotFinder ${i} mit denselben Funktionen und Bedienelementen, einschließlich ZIP, Filter, Karten, Folder viewer sowie CSV- und Screenshot-/PDF-Ausgabe. Mit ZIP können die aktuell gefilterten Fotos erneut als Paket weitergegeben werden. Download Slim HTML speichert eine saubere Programmdatei ohne Fotos, Kartenbilder, gespeicherte Foto-Ortsangaben oder vollständige Register. Im Fotopaket sind nur die beim Export vorhandenen Ortsangaben der enthaltenen Fotos gespeichert. Zum unveränderten Weitergeben den kompletten Originalordner einschließlich Fotos und maps oder das Original-ZIP kopieren.\nAlle Bildumwandlungen bei der Paketerstellung erfolgen lokal im Browser. Die Originaldateien bleiben unverändert.\n\nEN\n${e ? "1. Open viewer-SnapShotFinder.html in a browser. The packaged photos, saved locations and available map snapshots open automatically.\n2. Extract the complete ZIP when you need the separate JPG files. In SnapShotFinder - Viewer + Photos, viewer-SnapShotFinder.html and the JPG photos sit beside each other; map images also appear in the maps subfolder.\nThe same compressed JPGs and available map snapshots are also included as image data inside viewer-SnapShotFinder.html. Photos therefore remain available when a ZIP application passes only viewer-SnapShotFinder.html to the browser. There is no need to drag photos from the ZIP view into the browser." : "1. Extract the complete ZIP. In SnapShotFinder - Viewer + Photos, viewer-SnapShotFinder.html and the JPG photos sit beside each other.\n2. Open viewer-SnapShotFinder.html in a browser. No photos are loaded automatically.\n3. Select the JPG files and drag them into the viewer, or use Open photos. Keep their filenames unchanged so the saved locations can be matched.\nPhotos are ordinary separate JPGs, not embedded in viewer-SnapShotFinder.html. The viewer contains their saved photo and location data. Keep any maps subfolder beside viewer-SnapShotFinder.html for the saved map images."}\nSaved addresses, roads and CFL information are available without an Internet connection, where present at export time. Online services load interactive maps and full registers. The saved map images show the views visible when the package was created.\nThis viewer contains the complete current SnapShotFinder ${i} with the same functions and controls, including ZIP, filters, maps, Folder viewer, CSV and screenshot/PDF output. Use ZIP to create another package from the currently filtered photos. Download Slim HTML saves a clean program file without photos, map images, saved photo locations or full registers. The photo package stores only the location details available at export time for its included photos. To pass the package on unchanged, copy its complete original folder, including the photos and maps, or the original ZIP.\nAll photo conversion during package creation takes place locally in the browser. The source files are unchanged.\n`;
+        async function O(s) {
+          if (m) return;
+          const r = new AbortController, d = r.signal;
+          m = r, e("zipDownload").hidden = !0, e("zipCancel").hidden = !1, e("zipProgress").hidden = !1, 
+          e("zipProgress").value = 0, e("zipAttach").hidden = !0, v(), z(`Preparing ${s.photos.length} photos…`, `Complete ZIP limit: ${S(c)}.`);
           try {
-            v(s);
-            const o = new Map;
-            for (const e of i.photos) {
+            P(d);
+            const r = new Map;
+            for (const e of s.photos) {
               if (e.file instanceof Blob && e.file.size) {
-                o.set(e.id, e.file);
+                r.set(e.id, e.file);
                 continue;
               }
               if (a.isValid(e.embedded)) try {
-                o.set(e.id, await a.read(e.embedded, {
-                  signal: s
+                r.set(e.id, await a.read(e.embedded, {
+                  signal: d
                 }));
                 continue;
               } catch (e) {
-                v(s);
+                P(d);
               }
               if (!e.packagePath) throw new Error(`“${e.file?.name || "Photo"}” is empty or unreadable and cannot be converted to JPG.`);
               if (e.packagePath && /^https?:$/.test(location.protocol)) {
                 for (const n of t.packagePhotoPaths(e)) try {
                   const t = n.split("/").map(encodeURIComponent).join("/"), a = await fetch(t, {
-                    signal: s
+                    signal: d
                   });
                   if (!a.ok) throw new Error("Photo missing.");
                   const i = await a.blob();
                   if (!i.size) throw new Error("Photo empty.");
-                  o.set(e.id, i);
+                  r.set(e.id, i);
                   break;
                 } catch (e) {
-                  v(s);
+                  P(d);
                 }
-                if (o.has(e.id)) continue;
+                if (r.has(e.id)) continue;
               }
               const n = new Error("To create another ZIP from this local package, choose its JPG files once. The photos remain viewable without this step.");
               throw n.code = "SSF_MISSING_PHOTO", n;
             }
-            const p = await i.maps.encode(s);
-            v(s);
-            const c = new Set;
-            for (const {record: e, canvas: t} of i.savedMaps || []) {
-              const n = p.snapshots.findIndex(t => t.id === e.id);
-              if (n >= 0 && p.snapshots[n].path) continue;
-              const a = new Set(i.photos.map(e => String(e.id))), o = {
+            const g = await s.maps.encode(d);
+            P(d);
+            const m = new Set;
+            for (const {record: e, canvas: t} of s.savedMaps || []) {
+              const n = g.snapshots.findIndex(t => t.id === e.id);
+              if (n >= 0 && g.snapshots[n].path) continue;
+              const a = new Set(s.photos.map(e => String(e.id))), i = {
                 ...e,
-                selectedId: i.selectedId,
+                selectedId: s.selectedId,
                 points: (e.points || []).filter(e => a.has(String(e.id)))
-              }, r = t ? await new Promise(n => t.toBlob(n, /\.png$/i.test(e.path) ? "image/png" : "image/jpeg", .92)) : null;
-              v(s), r || (o.path = null, o.kind = "online", t && i.savedMapWarnings.push({
+              }, o = t ? await new Promise(n => t.toBlob(n, /\.png$/i.test(e.path) ? "image/png" : "image/jpeg", .92)) : null;
+              P(d), o || (i.path = null, i.kind = "online", t && s.savedMapWarnings.push({
                 id: e.id,
                 message: `Map ${e.id}: the saved map image could not be included again; this map will load online.`
-              })), n < 0 ? p.snapshots.push(o) : p.snapshots[n] = o, r && (p.entries.push({
-                name: o.path,
-                blob: r
-              }), c.add(o.id));
+              })), n < 0 ? g.snapshots.push(i) : g.snapshots[n] = i, o && (g.entries.push({
+                name: i.path,
+                blob: o
+              }), m.add(i.id));
             }
-            const g = new Map(p.entries.map(e => [ e.name, e.blob ]));
-            for (const e of p.snapshots || []) {
-              if (delete e.embedded, !i.autoOpen || !e.path) continue;
-              const t = g.get(e.path);
+            const u = new Map(g.entries.map(e => [ e.name, e.blob ]));
+            for (const e of g.snapshots || []) {
+              if (delete e.embedded, !s.autoOpen || !e.path) continue;
+              const t = u.get(e.path);
               if (!t) throw new Error("A saved map image is unavailable: " + e.path);
               e.embedded = await a.encode(t, {
-                signal: s
-              }), v(s);
+                signal: d
+              }), P(d);
             }
-            const w = await window.SSFSlimHTML();
-            v(s);
-            const f = (i.savedMapWarnings || []).filter(e => !p.snapshots.some(t => t.id === e.id && t.path)), b = new Set([ ...c, ...f.map(e => e.id) ]), S = (p.warnings || []).filter(e => ![ ...b ].some(t => e.startsWith("Map " + t + ":")));
-            S.push(...f.map(e => e.message));
-            const I = i.photos.filter(e => e.hasGPS && !(e.addressReady && e.roadReady && e.railReady));
-            I.length && S.push(`${I.length} photo${1 === I.length ? " has" : "s have"} incomplete saved location data; the viewer can load missing registers online.`);
-            const F = {
+            const b = await window.SSFSlimHTML();
+            P(d);
+            const f = (s.savedMapWarnings || []).filter(e => !g.snapshots.some(t => t.id === e.id && t.path)), v = new Set([ ...m, ...f.map(e => e.id) ]), k = (g.warnings || []).filter(e => ![ ...v ].some(t => e.startsWith("Map " + t + ":")));
+            k.push(...f.map(e => e.message));
+            const O = s.photos.filter(e => e.hasGPS && !(e.addressReady && e.roadReady && e.railReady));
+            O.length && k.push(`${O.length} photo${1 === O.length ? " has" : "s have"} incomplete saved location data; the viewer can load missing registers online.`);
+            const y = {
               version: 1,
-              appVersion: "2.8.6",
-              selfContained: i.autoOpen,
-              manualImport: !i.autoOpen,
-              autoOpen: i.autoOpen,
-              folderName: r,
-              createdAt: i.createdAt,
-              selectedId: i.selectedId,
-              tab: i.tab,
-              linkMaps: i.linkMaps,
-              maps: p.snapshots || [],
-              registerInfo: i.registerInfo,
-              warnings: S,
+              appVersion: i,
+              selfContained: s.autoOpen,
+              manualImport: !s.autoOpen,
+              autoOpen: s.autoOpen,
+              folderName: l,
+              createdAt: s.createdAt,
+              selectedId: s.selectedId,
+              tab: s.tab,
+              linkMaps: s.linkMaps,
+              maps: g.snapshots || [],
+              warnings: k,
               photos: []
-            }, O = [ ...p.entries, {
+            }, E = [ ...g.entries, {
               name: "START-HERE.txt",
-              blob: k(i.autoOpen)
+              blob: I(s.autoOpen)
             } ];
-            F.photos = i.photos.map((e, t) => z(e, {
+            y.photos = s.photos.map((e, t) => F(e, {
               name: `${e.id}_photo_${t}.jpg`,
               width: 0,
               height: 0
             }));
-            const y = await window.SSFViewerBuilder.build(w, F, {
-              signal: s
-            }), E = await n.zip(d([ {
-              name: "viewer.html",
-              blob: y
-            }, ...O ]), {
-              signal: s
-            }), D = h - E.size - 4096 - 768 * i.photos.length;
-            if (D <= 0) throw Object.assign(new Error(`The viewer, saved data and maps already need about ${u(E.size)}. Increase the ZIP size.`), {
+            const D = await window.SSFViewerBuilder.build(b, y, {
+              signal: d
+            }), $ = await n.zip(h([ {
+              name: o,
+              blob: D
+            }, ...E ]), {
+              signal: d
+            }), Z = c - $.size - 4096 - 768 * s.photos.length;
+            if (Z <= 0) throw Object.assign(new Error(`The viewer, saved data and maps already need about ${S($.size)}. Increase the ZIP size.`), {
               code: "SSF_BUDGET"
             });
-            const M = new DataView(await E.slice(0, 10).arrayBuffer());
-            v(s);
-            const Z = M.byteLength >= 10 && 67324752 === M.getUint32(0, !0) && 8 === M.getUint16(8, !0);
-            let $, G, A = Math.floor(D / (i.autoOpen ? Z ? 2.1 : 7 / 3 : 1));
+            const M = new DataView(await $.slice(0, 10).arrayBuffer());
+            P(d);
+            const G = M.byteLength >= 10 && 67324752 === M.getUint32(0, !0) && 8 === M.getUint16(8, !0);
+            let T, A, C = Math.floor(Z / (s.autoOpen ? G ? 2.1 : 7 / 3 : 1));
             for (let t = 0; t < 3; t++) {
-              v(s), $ = await n.compressPhotos(i.photos, A, {
-                signal: s,
-                readBlob: e => o.get(e.id),
+              P(d), T = await n.compressPhotos(s.photos, C, {
+                signal: d,
+                readBlob: e => r.get(e.id),
                 onProgress: t => {
-                  if (s.aborted) return;
+                  if (d.aborted) return;
                   const n = t.total ? t.done / t.total : 0;
-                  e("zipProgress").value = Math.min(90, 5 + 80 * n), P(`Preparing JPG photos · ${t.done} / ${t.total}`, `${t.name || ""} · ZIP limit ${u(h)}`);
+                  e("zipProgress").value = Math.min(90, 5 + 80 * n), z(`Preparing JPG photos · ${t.done} / ${t.total}`, `${t.name || ""} · ZIP limit ${S(c)}`);
                 }
-              }), v(s), F.photos = [];
-              for (const t of $.photos) {
-                v(s);
-                const n = z(t.photo, t);
-                if (i.autoOpen) {
+              }), P(d), y.photos = [];
+              for (const t of T.photos) {
+                P(d);
+                const n = F(t.photo, t);
+                if (s.autoOpen) {
                   n.embedded = await a.encode(t.blob, {
-                    signal: s
-                  }), v(s);
-                  const i = F.photos.length + 1;
-                  e("zipProgress").value = 85 + 5 * i / $.photos.length, P(`Adding photos to the viewer · ${i} / ${$.photos.length}`, "The same JPGs remain available as separate files.");
+                    signal: d
+                  }), P(d);
+                  const i = y.photos.length + 1;
+                  e("zipProgress").value = 85 + 5 * i / T.photos.length, z(`Adding photos to the viewer · ${i} / ${T.photos.length}`, "The same JPGs remain available as separate files.");
                 }
-                F.photos.push(n);
+                y.photos.push(n);
               }
-              F.warnings = [ ...S, ...$.warnings || [] ], P("Building the photo package…", `${$.photos.length} JPG photos · checking the complete ZIP size.`), 
-              e("zipProgress").value = 92, await l();
-              const t = await window.SSFViewerBuilder.build(w, F, {
-                signal: s
+              y.warnings = [ ...k, ...T.warnings || [] ], z("Building the photo package…", `${T.photos.length} JPG photos · checking the complete ZIP size.`), 
+              e("zipProgress").value = 92, await p();
+              const t = await window.SSFViewerBuilder.build(b, y, {
+                signal: d
               });
-              if (G = await n.zip(d([ {
-                name: "viewer.html",
+              if (A = await n.zip(h([ {
+                name: o,
                 blob: t
-              }, ...O, ...$.photos.map(e => ({
+              }, ...E, ...T.photos.map(e => ({
                 name: e.name,
                 blob: e.blob,
                 compress: !1
               })) ]), {
-                signal: s
-              }), v(s), G.size <= h) break;
-              const r = Math.max(1, G.size - E.size);
-              if (A = Math.floor(Math.min(A - 1, $.totalBytes * D / r * .98)), G = null, A <= 0) break;
+                signal: d
+              }), P(d), A.size <= c) break;
+              const i = Math.max(1, A.size - $.size);
+              if (C = Math.floor(Math.min(C - 1, T.totalBytes * Z / i * .98)), A = null, C <= 0) break;
             }
-            if (!G || G.size > h) throw Object.assign(new Error("All selected photos cannot fit this ZIP limit at the minimum quality. Increase the size or narrow the photo filter."), {
+            if (!A || A.size > c) throw Object.assign(new Error("All selected photos cannot fit this ZIP limit at the minimum quality. Increase the size or narrow the photo filter."), {
               code: "SSF_BUDGET"
             });
-            v(s), m && URL.revokeObjectURL(m), m = URL.createObjectURL(G);
-            const C = new Date(i.createdAt).toISOString().slice(0, 19).replace(/[:T]/g, "-"), T = e("zipDownload");
-            T.href = m, T.download = `${r} - ${C}.zip`, T.hidden = !1, e("zipProgress").value = 100;
-            const x = F.maps.filter(e => e.path).length, B = i.autoOpen ? "Open viewer.html: the package photos and saved maps appear automatically. Extract the ZIP when you need the separate JPGs." : "Extract the ZIP, open viewer.html, then drop the JPGs into it.";
-            P(`ZIP ready · ${u(G.size)} / ${u(h)}`, `${r} · ${i.photos.length} JPG photos beside viewer.html · ${x} map snapshot${1 === x ? "" : "s"}. ${B} ${F.warnings.join(" ")}`), 
-            T.click();
+            P(d), w && URL.revokeObjectURL(w), w = URL.createObjectURL(A);
+            const x = new Date(s.createdAt).toISOString().slice(0, 19).replace(/[:T]/g, "-"), B = e("zipDownload");
+            B.href = w, B.download = `${l} - ${x}.zip`, B.hidden = !1, e("zipProgress").value = 100;
+            const J = y.maps.filter(e => e.path).length, L = s.autoOpen ? "Open viewer-SnapShotFinder.html: the package photos and saved maps appear automatically. Extract the ZIP when you need the separate JPGs." : "Extract the ZIP, open viewer-SnapShotFinder.html, then drop the JPGs into it.";
+            z(`ZIP ready · ${S(A.size)} / ${S(c)}`, `${l} · ${s.photos.length} JPG photos beside viewer-SnapShotFinder.html · ${J} map snapshot${1 === J ? "" : "s"}. ${L} ${y.warnings.join(" ")}`), 
+            B.click();
           } catch (t) {
-            if ("AbortError" === t.name) P("ZIP export cancelled.", "The photos and your size setting are unchanged."); else {
-              const n = "SSF_BUDGET" === t.code && i.autoOpen ? " For a smaller package, uncheck “Open package photos automatically” in the ZIP settings." : "";
-              P("The ZIP could not be created.", (t.message || "Please try again.") + n, !0), 
+            if ("AbortError" === t.name) z("ZIP export cancelled.", "The photos and your size setting are unchanged."); else {
+              const n = "SSF_BUDGET" === t.code && s.autoOpen ? " For a smaller package, uncheck “Open package photos automatically” in the ZIP settings." : "";
+              z("The ZIP could not be created.", (t.message || "Please try again.") + n, !0), 
               "SSF_MISSING_PHOTO" === t.code && (e("zipAttach").hidden = !1), console.warn("ZIP export:", t);
             }
           } finally {
-            i.maps?.dispose?.(), c = null, e("zipCancel").hidden = !0, e("zipProgress").hidden = !0, 
-            b();
+            s.maps?.dispose?.(), m = null, e("zipCancel").hidden = !0, e("zipProgress").hidden = !0, 
+            v();
           }
         }
-        const F = document.createElement("button");
-        F.id = "zipAttach", F.type = "button", F.textContent = "Choose packaged JPGs", F.hidden = !0;
-        const O = document.createElement("input");
-        O.id = "packageFileInput", O.type = "file", O.multiple = !0, O.accept = ".jpg,.jpeg,image/jpeg", 
-        O.hidden = !0, e("zipStatus").append(F, O), F.addEventListener("click", () => {
-          O.value = "", O.click();
-        }), O.addEventListener("change", () => {
-          const e = t.attachPackageFiles(O.files);
-          O.value = "", e ? (F.hidden = !0, P(`${e} packaged photo files connected.`, "Click ZIP to create a new package.")) : P("No matching JPG files selected.", "Choose the original JPG files delivered with this viewer, keeping their filenames unchanged.", !0);
-        }), f(), b();
+        const y = document.createElement("button");
+        y.id = "zipAttach", y.type = "button", y.textContent = "Choose packaged JPGs", y.hidden = !0;
+        const E = document.createElement("input");
+        E.id = "packageFileInput", E.type = "file", E.multiple = !0, E.accept = ".jpg,.jpeg,image/jpeg", 
+        E.hidden = !0, e("zipStatus").append(y, E), y.addEventListener("click", () => {
+          E.value = "", E.click();
+        }), E.addEventListener("change", () => {
+          const e = t.attachPackageFiles(E.files);
+          E.value = "", e ? (y.hidden = !0, z(`${e} packaged photo files connected.`, "Click ZIP to create a new package.")) : z("No matching JPG files selected.", "Choose the original JPG files delivered with this viewer, keeping their filenames unchanged.", !0);
+        }), f(), v();
       })();
     </script>
     <script id="ssf-source-capture">
